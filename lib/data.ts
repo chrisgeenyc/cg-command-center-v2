@@ -184,43 +184,44 @@ export interface QueueSlot {
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-export const TODAY_LABEL = "Friday, Apr 24";
+export const TODAY_LABEL = "Monday, May 11";
 
-export const HOOK = "One live client deadline today, ~$36K closed this month, your inbox board is clean. Coursera is the dragon — video recording is the last boss.";
+export const HOOK = "Two days to the Teal retreat in DC. Three back-to-back meetings closed this afternoon. Tonight the prep stops being conceptual and turns logistical — bag, deck, opening line.";
 
 export const PRIORITY = {
   kicker: "TODAY'S SINGLE PRIORITY",
-  title: "Coursera Wk 6–10 content is due today. Drafts (1–4) are done — twelve lesson recordings, platform upload, grading config, then publish.",
-  hint: "If slipping is likely, flag Sharisse to request an extension.",
-  progressLabel: "STEP 2 / 4",
-  percent: 50,
+  title: "Two days to Teal DC. Tomorrow's a travel day. Tonight is the last real prep window — deck opens, opening line is sharp, bag is by the door.",
+  hint: "Pre-work landed Friday. The job today is readiness, not content.",
+  progressLabel: "T-2 DAYS",
+  percent: 80,
 };
 
 export const METRICS: MetricItem[] = [
   { label: "Active Projects",  value: "4",   sub: "1 at risk today",          subDot: "risk",    trend: { dir: "flat", text: "no change" } },
   { label: "Open Tasks",       value: "3",   sub: "of 13 · 77% complete",     subDot: "healthy", trend: { dir: "up",   text: "+2 done" } },
   { label: "Pipeline Won",     value: "36",  unit: "K",  prefix: "$",         sub: "+ Fenton $10K/mo retainer", subDot: "healthy", trend: { dir: "up", text: "+12%" }, spark: true },
-  { label: "This Week's Deadlines", value: "1", sub: "Coursera — today",      subDot: "risk",    trend: { dir: "flat", text: "vs. last wk" } },
+  { label: "This Week's Deadlines", value: "2", sub: "Retreat Wed-Thu · Coursera Fri",  subDot: "risk",    trend: { dir: "flat", text: "front-loaded wk" } },
 ];
 
 export const PROJECTS: StatusItem[] = [
-  { name: "CG Command Center",        sub: "10 of 13 tasks complete · last updated Apr 17", status: "risk",    pill: "On track · 1 due today", icon: "terminal" },
-  { name: "Lead Nurture Pipeline",    sub: "6 deals logged · $36K closed + $10K/mo retainer", status: "healthy", pill: "Healthy", icon: "trend" },
-  { name: "Email Follow-ups",         sub: "3 of 5 resolved · 2 empty columns (by design)", status: "healthy", pill: "Clean", icon: "mail" },
-  { name: "Social Media Calendar",    sub: "1 open task from 2023 · likely stale",          status: "stale",   pill: "Needs review", icon: "calendar" },
+  { name: "CG Command Center",        sub: "Live · v2 dashboard auto-refresh wired today",        status: "healthy", pill: "Shipped",  icon: "terminal" },
+  { name: "Team LSG · AI Retreat",    sub: "Wed-Thu May 13-14 · DC · pre-work delivered Fri",     status: "risk",    pill: "T-2 days", icon: "video" },
+  { name: "Coursera Wk 6–10",         sub: "Drafts done · video recording + upload remain",       status: "risk",    pill: "Due Fri",  icon: "video" },
+  { name: "Fenton retainer",          sub: "Active · weekly check-ins via Shakirah",              status: "healthy", pill: "Healthy",  icon: "mail" },
 ];
 
 export const BLOCKED: StatusItem[] = [
-  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "14d overdue", icon: "alert" },
-  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due today · drafts done, videos + upload remain",  status: "risk",    pill: "At risk",    icon: "video" },
+  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "31d overdue", icon: "alert" },
+  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due Fri May 15 · drafts done, videos + upload remain", status: "risk",    pill: "4d to deadline", icon: "video" },
   { name: "“I used to think…” (Social Media Calendar)",    sub: "Due 2023-07-11 · appears abandoned",               status: "stale",   pill: "Stale — archive?", icon: "archive" },
 ];
 
 export const CALENDAR: CalendarItem[] = [
-  { time: "9:00–10:00",  title: "Morning Block",                       sub: "Focus — strategy + writing", tag: "focus" },
-  { time: "10:00–10:30", title: "Coursera Wk 11 — finalize on platform", sub: "Hard stop · publishes today", tag: "deadline" },
-  { time: "11:00–11:45", title: "AI Leadership Accelerator — 1:1 #2",  sub: "Client · Maria, Tegna",       tag: "client" },
-  { time: "2:00–2:30",   title: "Sharisse — Coursera check-in",         sub: "Internal · 15 min",           tag: "internal" },
+  { time: "1:00–2:00",   title: "Morning Block",                            sub: "Focus block — solo prep",        tag: "focus" },
+  { time: "2:00–3:00",   title: "Gigi x Abby — Soho Works Dumbo",           sub: "Network · in-person meetup",     tag: "client" },
+  { time: "3:30–4:30",   title: "Shakirah Hill Taylor — Fenton retainer",   sub: "Client · 1-hour Zoom",           tag: "client" },
+  { time: "6:00–6:45",   title: "Chris / LaToya — Macmillan",               sub: "Network · Google Meet",          tag: "client" },
+  { time: "8:00–10:00",  title: "Evening Block",                            sub: "Wrap-up + retreat prep",         tag: "focus" },
 ];
 
 export const WINS: WinItem[] = [
