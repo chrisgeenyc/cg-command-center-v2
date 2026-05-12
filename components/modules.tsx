@@ -233,8 +233,8 @@ export function PriorityCard({ style }: { style: string }) {
         <span><b>Escalation</b> · @sharisse if slipping</span>
       </div>
       <div className="priority-actions">
-        <button className="btn-primary"><Icon name="video" size={15} /> Start lesson 5 recording</button>
-        <button className="btn-ghost">Open Coursera workspace <Icon name="arrow-right" size={14} /></button>
+        <button className="btn-primary"><Icon name="video" size={15} /> Open Day 1 walkthrough</button>
+        <button className="btn-ghost">Open LSG retreat workspace <Icon name="arrow-right" size={14} /></button>
       </div>
     </section>
   );

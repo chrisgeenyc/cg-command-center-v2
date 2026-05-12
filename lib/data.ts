@@ -190,7 +190,7 @@ export const HOOK = "Wheels up to DC by 3 PM. Two client sessions stacked before
 
 export const PRIORITY = {
   kicker: "TODAY'S SINGLE PRIORITY",
-  title: "Acela 2163 leaves Penn at 3:00. The morning is client time; the 1:30 Block is your last shot to seal the bag, the deck, and the opening line.",
+  title: "Travel day to the LSG Retreat in DC. Acela 2163 leaves Penn at 3:00 — morning is client time, 1:30 block is your last seal on the bag, the deck, and the opening line.",
   hint: "If it isn't in the carry-on by 2:45, it isn't coming to DC.",
   progressLabel: "T-1 DAY",
   percent: 90,
@@ -205,7 +205,7 @@ export const METRICS: MetricItem[] = [
 
 export const PROJECTS: StatusItem[] = [
   { name: "CG Command Center",        sub: "Live · v2 dashboard auto-refresh wired today",        status: "healthy", pill: "Shipped",  icon: "terminal" },
-  { name: "Team LSG · AI Retreat",    sub: "Wed-Thu May 13-14 · DC · pre-work delivered Fri",     status: "risk",    pill: "T-2 days", icon: "video" },
+  { name: "Team LSG · AI Retreat",    sub: "Wed-Thu May 13-14 · DC · travel day · on stage tomorrow", status: "risk",    pill: "T-1 day", icon: "video" },
   { name: "Coursera Wk 6–10",         sub: "Drafts done · video recording + upload remain",       status: "risk",    pill: "Due Fri",  icon: "video" },
   { name: "Fenton retainer",          sub: "Active · weekly check-ins via Shakirah",              status: "healthy", pill: "Healthy",  icon: "mail" },
 ];
