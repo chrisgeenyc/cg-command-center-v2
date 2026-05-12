@@ -165,8 +165,7 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(135deg, var(--accent) 0%, #9CD132 100%);
   display: grid; place-items: center;
   color: var(--accent-ink);
-  font-family: var(--font-serif); font-style: italic;
-  font-size: 19px; line-height: 1;
+  font-size: 19px; line-height: 1; font-weight: 600;
   box-shadow: 0 4px 14px -6px rgba(199, 240, 59, 0.55);
 }
 .brand-mark.has-logo {
@@ -412,8 +411,8 @@ a { color: inherit; text-decoration: none; }
   100% { box-shadow: 0 0 0 0 rgba(199,240,59,0); }
 }
 .priority-title {
-  font-family: var(--font-serif);
   font-size: 30px; line-height: 1.18;
+  font-weight: 600;
   letter-spacing: -0.015em;
   margin: 18px 0 10px;
   font-weight: 400;
@@ -1076,7 +1075,6 @@ a { color: inherit; text-decoration: none; }
 .draft-preview {
   font-size: 13px; color: var(--ink-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-style: italic; font-family: var(--font-serif);
 }
 .draft-chev { color: var(--ink-3); flex: none; }
 .pulse-draft-body {
@@ -1113,8 +1111,8 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--font-mono);
 }
 .page-title {
-  font-family: var(--font-serif);
   font-size: 36px; line-height: 1.1;
+  font-weight: 600;
   letter-spacing: -0.02em; font-weight: 400;
   margin: 0 0 8px; color: var(--ink);
 }
@@ -1362,7 +1360,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--r-md); display: flex; flex-direction: column; overflow: hidden;
 }
 .notes-editor-head { padding: 16px 22px; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; gap: 12px; }
-.notes-editor-title { font-family: var(--font-serif); font-size: 26px; line-height: 1.1; letter-spacing: -0.01em; flex: 1; color: var(--ink); }
+.notes-editor-title { font-size: 26px; line-height: 1.1; letter-spacing: -0.01em; font-weight: 600; flex: 1; color: var(--ink); }
 .notes-editor-tools { display: flex; gap: 6px; }
 .notes-link-bar {
   padding: 10px 22px; border-bottom: 1px solid var(--hairline);
@@ -1452,7 +1450,7 @@ a { color: inherit; text-decoration: none; }
 .todays-move .tm-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,.78); font-weight: 500; }
 .todays-move .tm-kicker .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(199,240,59,.25); animation: tm-pulse 1.6s ease-in-out infinite; }
 @keyframes tm-pulse { 0%,100% { opacity: 1 } 50% { opacity: .55 } }
-.todays-move .tm-title { font-family: var(--font-serif); font-size: 26px; line-height: 1.22; font-weight: 400; margin: 8px 0 10px; letter-spacing: -0.005em; max-width: 64ch; }
+.todays-move .tm-title { font-size: 26px; line-height: 1.22; font-weight: 600; margin: 8px 0 10px; letter-spacing: -0.005em; max-width: 64ch; }
 .todays-move .tm-meta { font-size: 12.5px; color: rgba(255,255,255,.72); }
 .todays-move .tm-meta b { color: rgba(255,255,255,.94); font-weight: 500; }
 .todays-move .tm-actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
@@ -1691,7 +1689,7 @@ a { color: inherit; text-decoration: none; }
 .pdetail-head .close { width: 32px; height: 32px; border-radius: 8px; background: var(--surface); border: 1px solid var(--hairline); display: grid; place-items: center; color: var(--ink-2); margin-left: auto; }
 .pdetail-head .close:hover { background: var(--surface-2); color: var(--ink); }
 .pdetail-eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-4); font-weight: 500; font-family: var(--font-mono); }
-.pdetail-name { font-family: var(--font-serif); font-size: 28px; letter-spacing: -0.01em; color: var(--ink); font-weight: 400; margin: 4px 0 6px; line-height: 1.15; }
+.pdetail-name { font-size: 28px; letter-spacing: -0.01em; color: var(--ink); font-weight: 600; margin: 4px 0 6px; line-height: 1.15; }
 .pdetail-client { font-size: 12.5px; color: var(--ink-3); }
 .pdetail-pills { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
 .pdetail-body { padding: 22px 24px 80px; }
