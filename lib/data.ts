@@ -184,21 +184,21 @@ export interface QueueSlot {
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-export const TODAY_LABEL = "Monday, May 11";
+export const TODAY_LABEL = "Tuesday, May 12";
 
-export const HOOK = "Two days to the Teal retreat in DC. Three back-to-back meetings closed this afternoon. Tonight the prep stops being conceptual and turns logistical — bag, deck, opening line.";
+export const HOOK = "Wheels up to DC by 3 PM. Two client sessions stacked before the Acela, then dinner with Tesa to kick off the retreat week. Whatever's not packed by lunch isn't coming.";
 
 export const PRIORITY = {
   kicker: "TODAY'S SINGLE PRIORITY",
-  title: "Two days to Teal DC. Tomorrow's a travel day. Tonight is the last real prep window — deck opens, opening line is sharp, bag is by the door.",
-  hint: "Pre-work landed Friday. The job today is readiness, not content.",
-  progressLabel: "T-2 DAYS",
-  percent: 80,
+  title: "Acela 2163 leaves Penn at 3:00. The morning is client time; the 1:30 Block is your last shot to seal the bag, the deck, and the opening line.",
+  hint: "If it isn't in the carry-on by 2:45, it isn't coming to DC.",
+  progressLabel: "T-1 DAY",
+  percent: 90,
 };
 
 export const METRICS: MetricItem[] = [
-  { label: "Active Projects",  value: "4",   sub: "1 at risk today",          subDot: "risk",    trend: { dir: "flat", text: "no change" } },
-  { label: "Open Tasks",       value: "3",   sub: "of 13 · 77% complete",     subDot: "healthy", trend: { dir: "up",   text: "+2 done" } },
+  { label: "Active Projects",  value: "4",   sub: "2 at risk · retreat T-1 + Coursera Fri", subDot: "risk", trend: { dir: "flat", text: "no change" } },
+  { label: "Open Tasks",       value: "4",   sub: "today's travel-day stack", subDot: "healthy", trend: { dir: "flat", text: "no change" } },
   { label: "Pipeline Won",     value: "36",  unit: "K",  prefix: "$",         sub: "+ Fenton $10K/mo retainer", subDot: "healthy", trend: { dir: "up", text: "+12%" }, spark: true },
   { label: "This Week's Deadlines", value: "2", sub: "Retreat Wed-Thu · Coursera Fri",  subDot: "risk",    trend: { dir: "flat", text: "front-loaded wk" } },
 ];
@@ -211,17 +211,18 @@ export const PROJECTS: StatusItem[] = [
 ];
 
 export const BLOCKED: StatusItem[] = [
-  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "31d overdue", icon: "alert" },
-  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due Fri May 15 · drafts done, videos + upload remain", status: "risk",    pill: "4d to deadline", icon: "video" },
+  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "32d overdue", icon: "alert" },
+  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due Fri May 15 · drafts done, videos + upload remain", status: "risk",    pill: "3d to deadline", icon: "video" },
   { name: "“I used to think…” (Social Media Calendar)",    sub: "Due 2023-07-11 · appears abandoned",               status: "stale",   pill: "Stale — archive?", icon: "archive" },
 ];
 
 export const CALENDAR: CalendarItem[] = [
-  { time: "1:00–2:00",   title: "Morning Block",                            sub: "Focus block — solo prep",        tag: "focus" },
-  { time: "2:00–3:00",   title: "Gigi x Abby — Soho Works Dumbo",           sub: "Network · in-person meetup",     tag: "client" },
-  { time: "3:30–4:30",   title: "Shakirah Hill Taylor — Fenton retainer",   sub: "Client · 1-hour Zoom",           tag: "client" },
-  { time: "6:00–6:45",   title: "Chris / LaToya — Macmillan",               sub: "Network · Google Meet",          tag: "client" },
-  { time: "8:00–10:00",  title: "Evening Block",                            sub: "Wrap-up + retreat prep",         tag: "focus" },
+  { time: "9:00–10:00",   title: "Morning Block",                            sub: "Focus · pre-flight prep",            tag: "focus" },
+  { time: "10:30–11:00",  title: "Torie Johnson — 30-min Connect",           sub: "Baylor · intro Zoom",                tag: "client" },
+  { time: "12:00–1:30",   title: "AI Agents for PR Pros — Session 2",        sub: "Comms Collectiv cohort · Zoom",      tag: "client" },
+  { time: "1:30–3:00",    title: "Block",                                    sub: "Final pack · deck pass · door check",tag: "focus" },
+  { time: "3:00–6:02",    title: "Acela 2163 — Penn Stn → DC",                sub: "Train to Eaton Hotel · res 1F44EE",  tag: "deadline" },
+  { time: "7:15–9:15",    title: "Tesa Lau — Happy Hour",                    sub: "Rosslyn Towers · retreat warm-up",   tag: "client" },
 ];
 
 export const WINS: WinItem[] = [
@@ -240,10 +241,10 @@ export const QUICKIES: QuickieItem[] = [
 ];
 
 export const TASKS: TaskItem[] = [
-  { name: "Record Coursera lesson 5 — Prompts as Policy",  project: "Coursera Wk 6–10", percent: 30, urgent: true },
-  { name: "Upload modules 1–4 to platform", project: "Coursera Wk 6–10", percent: 80, urgent: true },
-  { name: "Draft Fenton April recap email", project: "Lead Nurture", percent: 50, urgent: false },
-  { name: "Reply to LSG kickoff thread",     project: "Team LSG",    percent: 10, urgent: false },
+  { name: "AI Agents for PR Pros — Session 2 prep (12 PM)", project: "Comms Collectiv", percent: 70, urgent: true },
+  { name: "Retreat deck — opening + closing pass",          project: "Team LSG · AI Retreat", percent: 60, urgent: true },
+  { name: "Pack travel kit before Acela 3 PM",              project: "Travel · DC", percent: 0, urgent: true },
+  { name: "Brief Sharisse on Fenton check-in coverage",     project: "Fenton retainer", percent: 20, urgent: false },
 ];
 
 export const NAV: NavItem[] = [
