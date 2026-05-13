@@ -25,6 +25,9 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
   const [copied, setCopied] = useState(false);
   const [stance, setStance] = useState(card.stance);
   const [saved, setSaved] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   const copyDraft = () => {
     navigator.clipboard?.writeText(card.draft).catch(() => {});
@@ -34,6 +37,29 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
 
   const flip = () => setStance(s => s === "contrarian" ? "standard" : "contrarian");
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 1800); };
+
+  // Regenerate, Send to contact, Dismiss — visual feedback now,
+  // real backends arrive with the Supabase/Buffer wiring sprint.
+  const regenerate = () => {
+    setRegenerating(true);
+    setTimeout(() => setRegenerating(false), 1400);
+  };
+  const sendToContact = () => {
+    setSent(true);
+    setTimeout(() => setSent(false), 1800);
+  };
+  const dismiss = () => {
+    setDismissed(true);
+  };
+
+  if (dismissed) {
+    return (
+      <article className="pulse-card pulse-dismissed">
+        <span className="pulse-source">Dismissed · {card.headline.slice(0, 60)}…</span>
+        <button className="btn-quiet" onClick={() => setDismissed(false)}>Undo</button>
+      </article>
+    );
+  }
 
   return (
     <article className={`pulse-card ${stanceClass(stance)}`}>
@@ -77,13 +103,17 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
         <button className="btn-quiet" onClick={copyDraft}>
           <Icon name={copied ? "check" : "copy"} size={14} /> {copied ? "Copied" : "Copy"}
         </button>
-        <button className="btn-quiet"><Icon name="refresh" size={14} /> Regenerate</button>
+        <button className="btn-quiet" onClick={regenerate} disabled={regenerating}>
+          <Icon name="refresh" size={14} /> {regenerating ? "Regenerating…" : "Regenerate"}
+        </button>
         <button className="btn-quiet flip" onClick={flip}><Icon name="shuffle" size={14} /> Flip stance</button>
-        <button className="btn-quiet"><Icon name="user" size={14} /> Send to contact</button>
+        <button className="btn-quiet" onClick={sendToContact}>
+          <Icon name={sent ? "check" : "user"} size={14} /> {sent ? "Quickie queued" : "Send to contact"}
+        </button>
         <a className="btn-quiet ghost" href={card.sourceUrl} target="_blank" rel="noreferrer">
           Read source <Icon name="arrow-right" size={12} />
         </a>
-        <button className="btn-quiet pulse-dismiss"><Icon name="x" size={14} /></button>
+        <button className="btn-quiet pulse-dismiss" onClick={dismiss} aria-label="Dismiss"><Icon name="x" size={14} /></button>
       </div>
     </article>
   );

@@ -232,10 +232,6 @@ export function PriorityCard({ style }: { style: string }) {
         <span><b>Owner</b> · Chris (solo)</span>
         <span><b>Escalation</b> · @sharisse if slipping</span>
       </div>
-      <div className="priority-actions">
-        <button className="btn-primary"><Icon name="video" size={15} /> Open Day 1 walkthrough</button>
-        <button className="btn-ghost">Open LSG retreat workspace <Icon name="arrow-right" size={14} /></button>
-      </div>
     </section>
   );
 }
