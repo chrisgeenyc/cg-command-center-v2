@@ -29,14 +29,30 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
   const [sent, setSent] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
+  // Editable draft — initialized from the static card content, mutated locally.
+  // Persistence lands with the Supabase wiring sprint.
+  const [draft, setDraft] = useState(card.draft);
+  const edited = draft !== card.draft;
+
   const copyDraft = () => {
-    navigator.clipboard?.writeText(card.draft).catch(() => {});
+    navigator.clipboard?.writeText(draft).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1400);
   };
 
   const flip = () => setStance(s => s === "contrarian" ? "standard" : "contrarian");
-  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 1800); };
+
+  // Save as cue → open Buffer's compose URL pre-filled with the (possibly edited)
+  // draft + source link. Uses Buffer's classic /add endpoint, which still routes
+  // to the right compose flow whether the user is on Buffer Publish or buffer.com.
+  const save = () => {
+    const text = encodeURIComponent(draft);
+    const url = encodeURIComponent(card.sourceUrl);
+    const bufferUrl = `https://buffer.com/add?text=${text}&url=${url}`;
+    window.open(bufferUrl, "_blank", "noopener,noreferrer");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
 
   // Regenerate, Send to contact, Dismiss — visual feedback now,
   // real backends arrive with the Supabase/Buffer wiring sprint.
@@ -83,16 +99,27 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
       </div>
 
       <button className="pulse-draft-toggle" onClick={() => setExpanded(e => !e)}>
-        <span className="draft-label">DRAFT · {wordCount(card.draft)} words</span>
-        <span className="draft-preview">{draftPreview(card.draft)}</span>
+        <span className="draft-label">
+          DRAFT · {wordCount(draft)} words{edited ? " · edited" : ""}
+        </span>
+        <span className="draft-preview">{draftPreview(draft)}</span>
         <Icon name={expanded ? "x" : "arrow-right"} size={13} className="draft-chev" />
       </button>
 
       {expanded && (
-        <div className="pulse-draft-body">
-          {card.draft.split("\n").map((p, i) =>
-            p.trim() ? <p key={i}>{p}</p> : <div key={i} className="draft-spacer" />
-          )}
+        <div className="pulse-draft-body pulse-draft-edit">
+          <textarea
+            className="pulse-draft-textarea"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            spellCheck
+            aria-label="Edit the LinkedIn draft"
+          />
+          <div className="pulse-draft-hint">
+            {edited
+              ? "Edited locally. ‘Save as cue’ opens Buffer with your changes."
+              : "Edit any line. ‘Save as cue’ opens Buffer pre-filled with the result."}
+          </div>
         </div>
       )}
 
