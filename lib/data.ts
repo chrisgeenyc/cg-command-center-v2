@@ -190,8 +190,8 @@ export const HOOK = "Stage day. LSG Retreat Day 1 at 1307 New York Avenue NW kic
 
 export const PRIORITY = {
   kicker: "TODAY'S SINGLE PRIORITY",
-  title: "LSG Retreat Day 1 — Foundational session at 1:30 PM, 1307 New York Avenue NW. Twelve months of pre-work, three days of travel, all funnels into the first thirty minutes on stage.",
-  hint: "Trust the deck. Trust the room. Don't try to cover everything — land the three big moves.",
+  title: "Day 1 LSG AI Session. Break a leg!",
+  hint: "1:30 PM at 1307 New York Avenue NW. Trust the deck. Trust the room.",
   progressLabel: "DAY 1 OF 2",
   percent: 50,
 };
