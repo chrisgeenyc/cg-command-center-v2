@@ -184,45 +184,42 @@ export interface QueueSlot {
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-export const TODAY_LABEL = "Tuesday, May 12";
+export const TODAY_LABEL = "Wednesday, May 13";
 
-export const HOOK = "Wheels up to DC by 3 PM. Two client sessions stacked before the Acela, then dinner with Tesa to kick off the retreat week. Whatever's not packed by lunch isn't coming.";
+export const HOOK = "Stage day. LSG Retreat Day 1 at 1307 New York Avenue NW kicks off at 1:30. Ragan AI training session squeezes in via Zoom at 2:45 — back-to-back trainer mode in DC.";
 
 export const PRIORITY = {
   kicker: "TODAY'S SINGLE PRIORITY",
-  title: "Travel day to the LSG Retreat in DC. Acela 2163 leaves Penn at 3:00 — morning is client time, 1:30 block is your last seal on the bag, the deck, and the opening line.",
-  hint: "If it isn't in the carry-on by 2:45, it isn't coming to DC.",
-  progressLabel: "T-1 DAY",
-  percent: 90,
+  title: "LSG Retreat Day 1 — Foundational session at 1:30 PM, 1307 New York Avenue NW. Twelve months of pre-work, three days of travel, all funnels into the first thirty minutes on stage.",
+  hint: "Trust the deck. Trust the room. Don't try to cover everything — land the three big moves.",
+  progressLabel: "DAY 1 OF 2",
+  percent: 50,
 };
 
 export const METRICS: MetricItem[] = [
-  { label: "Active Projects",  value: "4",   sub: "2 at risk · retreat T-1 + Coursera Fri", subDot: "risk", trend: { dir: "flat", text: "no change" } },
-  { label: "Open Tasks",       value: "4",   sub: "today's travel-day stack", subDot: "healthy", trend: { dir: "flat", text: "no change" } },
+  { label: "Active Projects",  value: "4",   sub: "Retreat live · Coursera due Fri", subDot: "risk", trend: { dir: "flat", text: "execution mode" } },
+  { label: "Open Tasks",       value: "4",   sub: "Day 1 stage stack", subDot: "healthy", trend: { dir: "flat", text: "no change" } },
   { label: "Pipeline Won",     value: "36",  unit: "K",  prefix: "$",         sub: "+ Fenton $10K/mo retainer", subDot: "healthy", trend: { dir: "up", text: "+12%" }, spark: true },
-  { label: "This Week's Deadlines", value: "2", sub: "Retreat Wed-Thu · Coursera Fri",  subDot: "risk",    trend: { dir: "flat", text: "front-loaded wk" } },
+  { label: "This Week's Deadlines", value: "2", sub: "Retreat Day 2 tomorrow · Coursera Fri",  subDot: "risk",    trend: { dir: "flat", text: "in the thick" } },
 ];
 
 export const PROJECTS: StatusItem[] = [
   { name: "CG Command Center",        sub: "Live · v2 dashboard auto-refresh wired today",        status: "healthy", pill: "Shipped",  icon: "terminal" },
-  { name: "Team LSG · AI Retreat",    sub: "Wed-Thu May 13-14 · DC · travel day · on stage tomorrow", status: "risk",    pill: "T-1 day", icon: "video" },
+  { name: "Team LSG · AI Retreat",    sub: "Wed-Thu May 13-14 · 1307 NY Ave NW DC · Day 1 on stage today", status: "risk",    pill: "Live · Day 1", icon: "video" },
   { name: "Coursera Wk 6–10",         sub: "Drafts done · video recording + upload remain",       status: "risk",    pill: "Due Fri",  icon: "video" },
   { name: "Fenton retainer",          sub: "Active · weekly check-ins via Shakirah",              status: "healthy", pill: "Healthy",  icon: "mail" },
 ];
 
 export const BLOCKED: StatusItem[] = [
-  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "32d overdue", icon: "alert" },
-  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due Fri May 15 · drafts done, videos + upload remain", status: "risk",    pill: "3d to deadline", icon: "video" },
+  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "33d overdue", icon: "alert" },
+  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due Fri May 15 · drafts done, videos + upload remain", status: "risk",    pill: "2d to deadline", icon: "video" },
   { name: "“I used to think…” (Social Media Calendar)",    sub: "Due 2023-07-11 · appears abandoned",               status: "stale",   pill: "Stale — archive?", icon: "archive" },
 ];
 
 export const CALENDAR: CalendarItem[] = [
-  { time: "9:00–10:00",   title: "Morning Block",                            sub: "Focus · pre-flight prep",            tag: "focus" },
-  { time: "10:30–11:00",  title: "Torie Johnson — 30-min Connect",           sub: "Baylor · intro Zoom",                tag: "client" },
-  { time: "12:00–1:30",   title: "AI Agents for PR Pros — Session 2",        sub: "Comms Collectiv cohort · Zoom",      tag: "client" },
-  { time: "1:30–3:00",    title: "Block",                                    sub: "Final pack · deck pass · door check",tag: "focus" },
-  { time: "3:00–6:02",    title: "Acela 2163 — Penn Stn → DC",                sub: "Train to Eaton Hotel · res 1F44EE",  tag: "deadline" },
-  { time: "7:15–9:15",    title: "Tesa Lau — Happy Hour",                    sub: "Rosslyn Towers · retreat warm-up",   tag: "client" },
+  { time: "1:30–3:10",    title: "LSG Retreat — Day 1 Foundational",         sub: "1307 New York Ave NW · on stage",      tag: "client" },
+  { time: "2:45–4:00",    title: "Ragan AI Training — Guest Expert",         sub: "Zoom · Command Center session for Ragan team", tag: "client" },
+  { time: "8:00–10:00",   title: "Evening Block",                            sub: "Day 1 debrief · Day 2 prep",           tag: "focus" },
 ];
 
 export const WINS: WinItem[] = [
