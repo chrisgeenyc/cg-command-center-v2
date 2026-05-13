@@ -1,0 +1,71 @@
+name: Dashboard refresh
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Weekday-morning refresh of cg-command-center-v2.vercel.app.
+#
+# v1 scope (this workflow):
+#   - Updates TODAY_LABEL in lib/data.ts to the current date in America/New_York
+#   - Commits + pushes if the value changed
+#   - Vercel auto-deploys from this branch (design/v1-dashboard-redesign)
+#
+# Replaces the Claude scheduled task that couldn't run because its sandbox
+# didn't have access to the local repo clone. GitHub Actions has native repo
+# auth via GITHUB_TOKEN — no folder grants, no .git lock files, no Mac required.
+#
+# Future (Phase 2):
+#   - Pull Outlook calendar via Microsoft Graph (needs Azure app registration)
+#   - Pull HubSpot deals via API (needs HUBSPOT_TOKEN secret)
+#   - Call Anthropic API for HOOK / PRIORITY editorial (needs ANTHROPIC_API_KEY)
+#   - Refresh Pulse cards from a news feed
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  # Weekday mornings at 7:07 AM Eastern.
+  # Cron is UTC. Eastern is UTC−4 in DST (Mar–Nov), UTC−5 otherwise.
+  # 11:07 UTC = 7:07 AM EDT; 12:07 UTC = 7:07 AM EST.
+  # We schedule both; the idempotent guard in refresh-date.mjs prevents double-commits.
+  schedule:
+    - cron: "7 11 * * 1-5"  # 7:07 AM EDT (Mar 9 – Nov 1)
+    - cron: "7 12 * * 1-5"  # 7:07 AM EST (Nov 2 – Mar 8)
+
+  # Allow manual triggering from the Actions tab.
+  workflow_dispatch:
+
+# Only one refresh at a time per branch.
+concurrency:
+  group: dashboard-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # so the bot can commit + push
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: design/v1-dashboard-redesign
+          # Use a token that can push back. GITHUB_TOKEN is fine for this branch.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run date refresh
+        run: node scripts/refresh-date.mjs
+
+      - name: Commit + push if changed
+        run: |
+          if [[ -n "$(git status --porcelain lib/data.ts)" ]]; then
+            git config user.name  "dashboard-refresh-bot"
+            git config user.email "dashboard-refresh-bot@users.noreply.github.com"
+            git add lib/data.ts
+            git commit -m "refresh: $(TZ=America/New_York date '+%Y-%m-%d') auto date update"
+            git push origin design/v1-dashboard-redesign
+            echo "Pushed date refresh."
+          else
+            echo "No changes — already on today's date."
+          fi
