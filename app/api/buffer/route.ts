@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-const BUFFER_BASE = 'https://api.bufferapp.com/1';
+const BUFFER_GRAPHQL = 'https://graph.buffer.com';
 
-async function bufferGet(path: string) {
-  const token = process.env.BUFFER_ACCESS_TOKEN;
-  const sep = path.includes('?') ? '&' : '?';
-  const res = await fetch(`${BUFFER_BASE}${path}${sep}access_token=${token}`);
-  if (!res.ok) throw new Error(`Buffer ${path} → ${res.status}`);
-  return res.json();
+async function bufferQuery(query: string) {
+  const res = await fetch(BUFFER_GRAPHQL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.BUFFER_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Buffer GraphQL → ${res.status}: ${text.slice(0, 300)}`);
+  }
+  const json = await res.json();
+  if (json.errors?.length) throw new Error(`Buffer GraphQL error: ${json.errors[0].message}`);
+  return json.data;
 }
 
 export async function GET() {
@@ -33,28 +43,36 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const profiles = await bufferGet('/profiles.json');
-    const profileList = Array.isArray(profiles) ? profiles.slice(0, 3) : [];
-
-    const queue: unknown[] = [];
-    const sent: unknown[] = [];
-
-    await Promise.all(
-      profileList.map(async (profile: { id: string }) => {
-        try {
-          const [pending, postedSent] = await Promise.all([
-            bufferGet(`/profiles/${profile.id}/updates/pending.json`),
-            bufferGet(`/profiles/${profile.id}/updates/sent.json`),
-          ]);
-          if (pending?.updates) queue.push(...pending.updates);
-          if (postedSent?.updates) sent.push(...postedSent.updates);
-        } catch {
-          // profile fetch failed — skip
+    const data = await bufferQuery(`
+      query {
+        channels {
+          id
+          name
+          service
+          serviceUsername
+          queue {
+            id
+            text
+            scheduledAt
+            status
+          }
         }
-      })
-    );
+      }
+    `);
 
-    const snapshot = { queue, sent, profiles: profileList };
+    const channels = data?.channels ?? [];
+    const queue = channels.flatMap((c: { queue?: unknown[] }) => c.queue ?? []);
+
+    const snapshot = {
+      queue,
+      sent: [],
+      profiles: channels.map((c: Record<string, unknown>) => ({
+        id: c.id,
+        service: c.service,
+        username: c.serviceUsername,
+        name: c.name,
+      })),
+    };
 
     const { error } = await supabaseAdmin
       .from('pulse_snapshot')
@@ -62,7 +80,7 @@ export async function POST() {
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true, queue_count: queue.length, sent_count: sent.length });
+    return NextResponse.json({ ok: true, queue_count: queue.length });
   } catch (err) {
     const msg = err instanceof Error ? err.message : JSON.stringify(err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
