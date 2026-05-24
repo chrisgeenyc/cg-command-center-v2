@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BASE_URL = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : 'http://localhost:3000';
-
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization');
   const expected = `Bearer ${process.env.CRON_SECRET}`;
@@ -11,11 +7,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const base = new URL(req.url).origin;
   const routes = ['/api/asana', '/api/hubspot', '/api/buffer'];
 
   const results = await Promise.allSettled(
     routes.map(route =>
-      fetch(`${BASE_URL}${route}`, { method: 'POST' }).then(r => r.json())
+      fetch(`${base}${route}`, { method: 'POST' }).then(r => r.json())
     )
   );
 
