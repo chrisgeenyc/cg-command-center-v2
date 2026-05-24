@@ -72,6 +72,7 @@ export async function POST() {
 
     return NextResponse.json({ ok: true, project_count: projects.length });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

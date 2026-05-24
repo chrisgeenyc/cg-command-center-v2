@@ -3,15 +3,10 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 const BUFFER_BASE = 'https://api.bufferapp.com/1';
 
-function bufferHeaders() {
-  return {
-    Authorization: `Bearer ${process.env.BUFFER_ACCESS_TOKEN}`,
-    'Content-Type': 'application/json',
-  };
-}
-
 async function bufferGet(path: string) {
-  const res = await fetch(`${BUFFER_BASE}${path}`, { headers: bufferHeaders() });
+  const token = process.env.BUFFER_ACCESS_TOKEN;
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(`${BUFFER_BASE}${path}${sep}access_token=${token}`);
   if (!res.ok) throw new Error(`Buffer ${path} → ${res.status}`);
   return res.json();
 }
@@ -69,6 +64,7 @@ export async function POST() {
 
     return NextResponse.json({ ok: true, queue_count: queue.length, sent_count: sent.length });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
