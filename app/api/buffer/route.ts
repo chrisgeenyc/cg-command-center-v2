@@ -43,19 +43,20 @@ export async function GET() {
 
 export async function POST() {
   try {
-    // Introspect Channel type to find available fields
+    // Get org ID and Channel type fields via introspection
     const introData = await bufferQuery(`
       query {
-        __type(name: "Channel") {
-          fields { name }
-        }
+        organizations { id name }
+        __type(name: "Channel") { fields { name } }
+        __type2: __type(name: "ChannelsInput") { inputFields { name } }
       }
     `);
+
+    const orgId: string = introData?.organizations?.[0]?.id ?? '';
     const channelFields: string[] = (introData?.__type?.fields ?? []).map(
       (f: { name: string }) => f.name
     );
 
-    // Build channel query with only fields that exist
     const usernameField = channelFields.find(f =>
       ['handle', 'username', 'serviceUsername', 'screenName'].includes(f)
     ) ?? null;
@@ -65,13 +66,11 @@ export async function POST() {
 
     const channelSubfields = ['id', 'name', 'service'];
     if (usernameField) channelSubfields.push(usernameField);
-    const queueSubquery = queueField
-      ? `${queueField} { id text scheduledAt status }`
-      : '';
+    const queueSubquery = queueField ? `${queueField} { id text scheduledAt status }` : '';
 
     const data = await bufferQuery(`
       query {
-        channels {
+        channels(input: { organizationId: "${orgId}" }) {
           ${channelSubfields.join('\n          ')}
           ${queueSubquery}
         }
@@ -86,6 +85,7 @@ export async function POST() {
     const snapshot = {
       queue,
       sent: [],
+      orgId,
       channelFields,
       profiles: channels.map((c: Record<string, unknown>) => ({
         id: c.id,
