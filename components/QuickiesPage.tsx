@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/Icon';
 import { PageHeader, MetricStrip } from '@/components/modules';
 import {
@@ -80,12 +80,30 @@ function RelationshipOverview() {
 }
 
 export default function QuickiesPage({ tints = true }: { tints?: boolean }) {
-  const [items, setItems] = useState(QUICKIES_FULL);
+  const [items, setItems] = useState<(QuickieItem & { id?: string })[]>(QUICKIES_FULL);
   const [filter, setFilter] = useState("all");
   const [archiveOpen, setArchiveOpen] = useState(false);
 
+  useEffect(() => {
+    fetch('/api/quickies')
+      .then(r => r.json())
+      .then((data: (QuickieItem & { id?: string })[]) => {
+        if (Array.isArray(data) && data.length > 0) setItems(data);
+      })
+      .catch(() => {});
+  }, []);
+
   const toggle = (idx: number) => {
-    setItems(items.map((q, i) => i === idx ? { ...q, done: !q.done } : q));
+    const q = items[idx];
+    const newDone = !q.done;
+    setItems(items.map((item, i) => i === idx ? { ...item, done: newDone } : item));
+    if (q.id) {
+      fetch('/api/quickies', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: q.id, done: newDone }),
+      }).catch(() => {});
+    }
   };
 
   const channelCounts: Record<string, number> = {};

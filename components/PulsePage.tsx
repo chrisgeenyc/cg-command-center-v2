@@ -1,7 +1,39 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/Icon';
-import { PULSE_CARDS, PULSE_METRICS, PULSE_SAVED_CUES, PULSE_QUEUE, PULSE_ARCHIVE_COUNT, PulseCard, SavedCue } from '@/lib/data';
+import { PULSE_CARDS, PULSE_METRICS, PULSE_SAVED_CUES, PULSE_QUEUE, PULSE_ARCHIVE_COUNT, PulseCard, SavedCue, QueueSlot } from '@/lib/data';
+
+interface BufferUpdate {
+  id: string;
+  text?: string;
+  scheduled_at?: string;
+  status?: string;
+}
+
+interface BufferSnapshot {
+  queue: BufferUpdate[];
+  sent: BufferUpdate[];
+  profiles: unknown[];
+  synced_at?: string;
+}
+
+function mapBufferQueue(snapshot: BufferSnapshot): QueueSlot[] {
+  const slots: QueueSlot[] = [];
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  snapshot.queue.slice(0, 5).forEach((u, i) => {
+    const date = u.scheduled_at ? new Date(u.scheduled_at) : null;
+    const slot = date
+      ? `${days[date.getDay()]} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      : `Slot ${i + 1}`;
+    const title = u.text ? (u.text.length > 60 ? u.text.slice(0, 57) + '…' : u.text) : '—';
+    slots.push({ id: u.id ?? String(i), slot, title, status: 'scheduled' });
+  });
+  // Pad to 5 open slots
+  while (slots.length < 5) {
+    slots.push({ id: `open-${slots.length}`, slot: '—', title: '—', status: 'open' });
+  }
+  return slots;
+}
 
 const stanceClass = (s: string) => s === "contrarian" ? "stance-contrarian" : "stance-standard";
 const stanceLabel = (s: string) => s === "contrarian" ? "Contrarian take" : "Standard take";
@@ -89,18 +121,19 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
   );
 }
 
-function PulseQueueStrip() {
+function PulseQueueStrip({ queue }: { queue: QueueSlot[] }) {
+  const filled = queue.filter(s => s.status === 'scheduled').length;
   return (
     <div className="pulse-queue">
       <div className="pulse-queue-head">
         <span className="pulse-queue-title">This week&apos;s Buffer queue</span>
-        <span className="pulse-queue-sub">3 of 5 slots filled · LinkedIn personal · 9:00 AM ET</span>
+        <span className="pulse-queue-sub">{filled} of {queue.length} slots filled · LinkedIn personal · 9:00 AM ET</span>
         <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--ink-3)" }}>
           <Icon name="settings" size={11} /> manage in Settings
         </span>
       </div>
       <div className="pulse-queue-grid">
-        {PULSE_QUEUE.map(s => (
+        {queue.map(s => (
           <div key={s.id} className={`pulse-queue-cell ${s.status}`}>
             <div className="pulse-queue-slot">{s.slot}</div>
             <div className="pulse-queue-title-line">{s.title}</div>
@@ -284,6 +317,16 @@ export function TodayPulseModule({ navigate }: { navigate?: (id: string) => void
 export default function PulsePage() {
   const [filter, setFilter] = useState("all");
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [liveBuffer, setLiveBuffer] = useState<BufferSnapshot | null>(null);
+
+  useEffect(() => {
+    fetch('/api/buffer')
+      .then(r => r.json())
+      .then((d: BufferSnapshot) => { if (d.queue?.length || d.sent?.length) setLiveBuffer(d); })
+      .catch(() => {});
+  }, []);
+
+  const queue = liveBuffer ? mapBufferQueue(liveBuffer) : PULSE_QUEUE;
 
   const filters = [
     { id: "all", label: "Today's stories", count: PULSE_CARDS.length },
@@ -334,7 +377,7 @@ export default function PulsePage() {
         ))}
       </div>
 
-      <PulseQueueStrip />
+      <PulseQueueStrip queue={queue} />
 
       <div className="filter-bar">
         {filters.map(f => (

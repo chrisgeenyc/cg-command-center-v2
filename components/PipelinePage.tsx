@@ -1,12 +1,48 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Icon from '@/components/Icon';
 import { PageHeader, MetricStrip } from '@/components/modules';
 import {
   PIPELINE_METRICS, PIPELINE_REVENUE_SERIES, PIPELINE_FORECAST_BY_SERVICE,
   LEAD_NURTURE, PIPELINE_DEALS, PIPELINE_LOSSES, STUCK_DEALS, WINS,
-  LeadItem
+  LeadItem, DealItem
 } from '@/lib/data';
+
+interface HubSpotDeal {
+  id: string;
+  properties: {
+    dealname?: string;
+    amount?: string;
+    dealstage?: string;
+    closedate?: string;
+    hubspot_owner_id?: string;
+    hs_deal_stage_probability?: string;
+  };
+}
+
+interface HubSpotSnapshot {
+  deals: HubSpotDeal[];
+  pipelines: unknown[];
+  synced_at?: string;
+}
+
+function mapHubSpotDeals(snapshot: HubSpotSnapshot): DealItem[] {
+  return snapshot.deals.map((d) => {
+    const p = d.properties;
+    const amount = p.amount ? `$${Number(p.amount).toLocaleString()}` : '—';
+    const prob = p.hs_deal_stage_probability ? Number(p.hs_deal_stage_probability) : null;
+    const stuck = prob !== null && prob < 0.2;
+    return {
+      client: p.dealname ?? 'Unknown',
+      stage: p.dealstage ?? '—',
+      value: amount,
+      next: '—',
+      last: p.closedate ? new Date(p.closedate).toLocaleDateString() : '—',
+      owner: 'CG',
+      stuck,
+    };
+  });
+}
 
 function TodaysMove() {
   return (
@@ -187,20 +223,20 @@ function LeadNurture() {
   );
 }
 
-function DealsTable() {
+function DealsTable({ deals }: { deals: DealItem[] }) {
   return (
     <section className="section">
       <div className="section-head">
         <span className="section-dot" style={{ background: "var(--dot-healthy)" }} />
         <h3 className="section-title">Active Deals</h3>
-        <span className="section-count">{PIPELINE_DEALS.length} open</span>
+        <span className="section-count">{deals.length} open</span>
         <a className="section-action" href="#">+ Add deal <Icon name="arrow-right" size={12} /></a>
       </div>
       <div className="dtable">
         <div className="dtable-head">
           <div>Client</div><div>Stage</div><div>Value</div><div>Next Action</div><div>Last Touch</div><div>Owner</div>
         </div>
-        {PIPELINE_DEALS.map((d, i) => (
+        {deals.map((d, i) => (
           <div key={i} className={`dtable-row ${d.stuck ? "stuck" : ""}`}>
             <div className="dtable-client">{d.client}</div>
             <div><span className="dtable-stage">{d.stage}</span></div>
@@ -267,12 +303,24 @@ function WinsLossesRow() {
 }
 
 export default function PipelinePage() {
+  const [liveData, setLiveData] = useState<HubSpotSnapshot | null>(null);
+
+  useEffect(() => {
+    fetch('/api/hubspot')
+      .then(r => r.json())
+      .then((d: HubSpotSnapshot) => { if (d.deals?.length) setLiveData(d); })
+      .catch(() => {});
+  }, []);
+
+  const deals = liveData ? mapHubSpotDeals(liveData) : PIPELINE_DEALS;
+  const syncedAt = liveData?.synced_at;
+
   return (
     <main className="main main-full">
       <PageHeader
         title={<>Pipeline.</>}
         sub="Where the money is — and where it's stalling. 9 active conversations, 3 quiet, 6 leads warming."
-        right={<><strong>Apr 24, 2026</strong><span className="muted">SYNCED 8 MIN AGO · HUBSPOT</span></>}
+        right={<><strong>Apr 24, 2026</strong><span className="muted">{syncedAt ? `SYNCED ${new Date(syncedAt).toLocaleTimeString()} · HUBSPOT` : 'SYNCED 8 MIN AGO · HUBSPOT'}</span></>}
       />
       <TodaysMove />
       <MetricStrip items={PIPELINE_METRICS} />
@@ -281,7 +329,7 @@ export default function PipelinePage() {
         <ForecastPanel />
       </div>
       <StuckBanner />
-      <DealsTable />
+      <DealsTable deals={deals} />
       <LeadNurture />
       <WinsLossesRow />
     </main>

@@ -5,6 +5,60 @@ import Icon from '@/components/Icon';
 import { PageHeader, MetricStrip } from '@/components/modules';
 import { PROJECTS_METRICS, PROJECT_CARDS, ProjectCard as ProjectCardType } from '@/lib/data';
 
+interface AsanaProject {
+  gid: string;
+  name: string;
+  notes?: string;
+  due_date?: string;
+  permalink_url?: string;
+  current_status_update?: { text?: string };
+}
+
+interface AsanaTask {
+  gid: string;
+  name: string;
+  completed: boolean;
+  due_on?: string;
+}
+
+interface AsanaSnapshot {
+  projects: AsanaProject[];
+  tasks: Record<string, AsanaTask[]>;
+  synced_at?: string;
+}
+
+function mapAsanaToCards(snapshot: AsanaSnapshot): ProjectCardType[] {
+  return snapshot.projects.map((p) => {
+    const tasks: AsanaTask[] = snapshot.tasks?.[p.gid] ?? [];
+    const openTasks = tasks.filter((t) => !t.completed).length;
+    const totalTasks = tasks.length;
+    const percent = totalTasks > 0 ? Math.round(((totalTasks - openTasks) / totalTasks) * 100) : 0;
+
+    let daysLeft: number | null = null;
+    let deadline = '—';
+    if (p.due_date) {
+      deadline = p.due_date;
+      const diff = Math.ceil((new Date(p.due_date).getTime() - Date.now()) / 86400000);
+      daysLeft = diff >= 0 ? diff : 0;
+    }
+
+    const health = daysLeft === 0 ? 'risk' : daysLeft != null && daysLeft < 7 ? 'risk' : 'healthy';
+
+    return {
+      name: p.name,
+      client: p.notes?.split('\n')[0]?.slice(0, 40) ?? 'Asana',
+      deadline,
+      daysLeft,
+      percent,
+      openTasks,
+      blockers: 0,
+      last: 'synced from Asana',
+      health,
+      stage: 'in-flight',
+    };
+  });
+}
+
 const HEALTH_LABELS: Record<string, { label: string; className: string }> = {
   healthy: { label: "Healthy", className: "healthy" },
   risk:    { label: "At risk", className: "risk" },
@@ -174,16 +228,27 @@ function ProjectDetail({ p, onClose }: { p: ProjectCardType; onClose: () => void
 export default function ProjectsPage() {
   const [filter, setFilter] = useState("active");
   const [open, setOpen] = useState<ProjectCardType | null>(null);
+  const [liveData, setLiveData] = useState<AsanaSnapshot | null>(null);
+
+  useEffect(() => {
+    fetch('/api/asana')
+      .then(r => r.json())
+      .then((d: AsanaSnapshot) => { if (d.projects?.length) setLiveData(d); })
+      .catch(() => {});
+  }, []);
+
+  const cards = liveData ? mapAsanaToCards(liveData) : PROJECT_CARDS;
+  const syncedAt = liveData?.synced_at;
 
   const counts = {
-    all:    PROJECT_CARDS.length,
-    active: PROJECT_CARDS.filter(p => p.stage === "in-flight").length,
-    risk:   PROJECT_CARDS.filter(p => p.health === "risk").length,
-    onhold: PROJECT_CARDS.filter(p => p.stage === "on-hold").length,
+    all:    cards.length,
+    active: cards.filter(p => p.stage === "in-flight").length,
+    risk:   cards.filter(p => p.health === "risk").length,
+    onhold: cards.filter(p => p.stage === "on-hold").length,
     done:   0,
   };
 
-  const filtered = PROJECT_CARDS.filter(p =>
+  const filtered = cards.filter(p =>
     filter === "all"    ? true :
     filter === "active" ? p.stage === "in-flight" :
     filter === "risk"   ? p.health === "risk" :
@@ -196,7 +261,7 @@ export default function ProjectsPage() {
       <PageHeader
         title={<>Projects.</>}
         sub="What's in flight, what's stuck. Coursera ships Friday — Tegna needs a nudge."
-        right={<><strong>Apr 24, 2026</strong><span className="muted">SYNCED 12 MIN AGO · ASANA</span></>}
+        right={<><strong>Apr 24, 2026</strong><span className="muted">{syncedAt ? `SYNCED ${new Date(syncedAt).toLocaleTimeString()} · ASANA` : 'SYNCED 12 MIN AGO · ASANA'}</span></>}
       />
       <MetricStrip items={PROJECTS_METRICS} />
 
