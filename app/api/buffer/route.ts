@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-const BUFFER_GRAPHQL = 'https://graph.buffer.com';
+const BUFFER_GRAPHQL = 'https://api.buffer.com';
 
 async function bufferQuery(query: string) {
   const res = await fetch(BUFFER_GRAPHQL, {
