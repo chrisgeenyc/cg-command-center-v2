@@ -184,43 +184,42 @@ export interface QueueSlot {
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-export const TODAY_LABEL = "Friday, Apr 24";
+export const TODAY_LABEL = "Friday, May 22";
 
-export const HOOK = "One live client deadline today, ~$36K closed this month, your inbox board is clean. Coursera is the dragon — video recording is the last boss.";
+export const HOOK = "Stage day. LSG Retreat Day 1 at 1307 New York Avenue NW kicks off at 1:30. Ragan AI training session squeezes in via Zoom at 2:45 — back-to-back trainer mode in DC.";
 
 export const PRIORITY = {
   kicker: "TODAY'S SINGLE PRIORITY",
-  title: "Coursera Wk 6–10 content is due today. Drafts (1–4) are done — twelve lesson recordings, platform upload, grading config, then publish.",
-  hint: "If slipping is likely, flag Sharisse to request an extension.",
-  progressLabel: "STEP 2 / 4",
+  title: "Day 1 LSG AI Session. Break a leg!",
+  hint: "1:30 PM at 1307 New York Avenue NW. Trust the deck. Trust the room.",
+  progressLabel: "DAY 1 OF 2",
   percent: 50,
 };
 
 export const METRICS: MetricItem[] = [
-  { label: "Active Projects",  value: "4",   sub: "1 at risk today",          subDot: "risk",    trend: { dir: "flat", text: "no change" } },
-  { label: "Open Tasks",       value: "3",   sub: "of 13 · 77% complete",     subDot: "healthy", trend: { dir: "up",   text: "+2 done" } },
+  { label: "Active Projects",  value: "4",   sub: "Retreat live · Coursera due Fri", subDot: "risk", trend: { dir: "flat", text: "execution mode" } },
+  { label: "Open Tasks",       value: "4",   sub: "Day 1 stage stack", subDot: "healthy", trend: { dir: "flat", text: "no change" } },
   { label: "Pipeline Won",     value: "36",  unit: "K",  prefix: "$",         sub: "+ Fenton $10K/mo retainer", subDot: "healthy", trend: { dir: "up", text: "+12%" }, spark: true },
-  { label: "This Week's Deadlines", value: "1", sub: "Coursera — today",      subDot: "risk",    trend: { dir: "flat", text: "vs. last wk" } },
+  { label: "This Week's Deadlines", value: "2", sub: "Retreat Day 2 tomorrow · Coursera Fri",  subDot: "risk",    trend: { dir: "flat", text: "in the thick" } },
 ];
 
 export const PROJECTS: StatusItem[] = [
-  { name: "CG Command Center",        sub: "10 of 13 tasks complete · last updated Apr 17", status: "risk",    pill: "On track · 1 due today", icon: "terminal" },
-  { name: "Lead Nurture Pipeline",    sub: "6 deals logged · $36K closed + $10K/mo retainer", status: "healthy", pill: "Healthy", icon: "trend" },
-  { name: "Email Follow-ups",         sub: "3 of 5 resolved · 2 empty columns (by design)", status: "healthy", pill: "Clean", icon: "mail" },
-  { name: "Social Media Calendar",    sub: "1 open task from 2023 · likely stale",          status: "stale",   pill: "Needs review", icon: "calendar" },
+  { name: "CG Command Center",        sub: "Live · v2 dashboard auto-refresh wired today",        status: "healthy", pill: "Shipped",  icon: "terminal" },
+  { name: "Team LSG · AI Retreat",    sub: "Wed-Thu May 13-14 · 1307 NY Ave NW DC · Day 1 on stage today", status: "risk",    pill: "Live · Day 1", icon: "video" },
+  { name: "Coursera Wk 6–10",         sub: "Drafts done · video recording + upload remain",       status: "risk",    pill: "Due Fri",  icon: "video" },
+  { name: "Fenton retainer",          sub: "Active · weekly check-ins via Shakirah",              status: "healthy", pill: "Healthy",  icon: "mail" },
 ];
 
 export const BLOCKED: StatusItem[] = [
-  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "14d overdue", icon: "alert" },
-  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due today · drafts done, videos + upload remain",  status: "risk",    pill: "At risk",    icon: "video" },
+  { name: "Audit HubSpot contacts — clean unworked leads", sub: "Due Apr 10 · unassigned · 820+ contacts to triage", status: "blocked", pill: "33d overdue", icon: "alert" },
+  { name: "Coursera Wk 6–10: Create content & assets",     sub: "Due Fri May 15 · drafts done, videos + upload remain", status: "risk",    pill: "2d to deadline", icon: "video" },
   { name: "“I used to think…” (Social Media Calendar)",    sub: "Due 2023-07-11 · appears abandoned",               status: "stale",   pill: "Stale — archive?", icon: "archive" },
 ];
 
 export const CALENDAR: CalendarItem[] = [
-  { time: "9:00–10:00",  title: "Morning Block",                       sub: "Focus — strategy + writing", tag: "focus" },
-  { time: "10:00–10:30", title: "Coursera Wk 11 — finalize on platform", sub: "Hard stop · publishes today", tag: "deadline" },
-  { time: "11:00–11:45", title: "AI Leadership Accelerator — 1:1 #2",  sub: "Client · Maria, Tegna",       tag: "client" },
-  { time: "2:00–2:30",   title: "Sharisse — Coursera check-in",         sub: "Internal · 15 min",           tag: "internal" },
+  { time: "1:30–3:10",    title: "LSG Retreat — Day 1 Foundational",         sub: "1307 New York Ave NW · on stage",      tag: "client" },
+  { time: "2:45–4:00",    title: "Ragan AI Training — Guest Expert",         sub: "Zoom · Command Center session for Ragan team", tag: "client" },
+  { time: "8:00–10:00",   title: "Evening Block",                            sub: "Day 1 debrief · Day 2 prep",           tag: "focus" },
 ];
 
 export const WINS: WinItem[] = [
@@ -239,10 +238,10 @@ export const QUICKIES: QuickieItem[] = [
 ];
 
 export const TASKS: TaskItem[] = [
-  { name: "Record Coursera lesson 5 — Prompts as Policy",  project: "Coursera Wk 6–10", percent: 30, urgent: true },
-  { name: "Upload modules 1–4 to platform", project: "Coursera Wk 6–10", percent: 80, urgent: true },
-  { name: "Draft Fenton April recap email", project: "Lead Nurture", percent: 50, urgent: false },
-  { name: "Reply to LSG kickoff thread",     project: "Team LSG",    percent: 10, urgent: false },
+  { name: "AI Agents for PR Pros — Session 2 prep (12 PM)", project: "Comms Collectiv", percent: 70, urgent: true },
+  { name: "Retreat deck — opening + closing pass",          project: "Team LSG · AI Retreat", percent: 60, urgent: true },
+  { name: "Pack travel kit before Acela 3 PM",              project: "Travel · DC", percent: 0, urgent: true },
+  { name: "Brief Sharisse on Fenton check-in coverage",     project: "Fenton retainer", percent: 20, urgent: false },
 ];
 
 export const NAV: NavItem[] = [
@@ -261,71 +260,71 @@ export const NAV_SETTINGS: NavItem[] = [
 // ─── PULSE ───────────────────────────────────────────────────────────────────
 
 export const PULSE_METRICS: MetricItem[] = [
-  { label: "Stories Today",       value: "5", sub: "fresh @ 6:42 AM",          subDot: "healthy", trend: { dir: "flat", text: "daily refresh" } },
-  { label: "Posts Shipped (Wk)",  value: "3", sub: "of 5 target",              subDot: "risk",    trend: { dir: "up",   text: "+1 vs last wk" } },
-  { label: "Posts Shipped (Mo)",  value: "11",sub: "April",                    subDot: "healthy", trend: { dir: "up",   text: "+27% MoM" } },
+  { label: "Stories Today",       value: "5", sub: "fresh @ 7:58 AM May 13",   subDot: "healthy", trend: { dir: "flat", text: "manual pull" } },
+  { label: "Posts Shipped (Wk)",  value: "1", sub: "of 5 target · retreat wk", subDot: "risk",    trend: { dir: "down", text: "−2 on the road" } },
+  { label: "Posts Shipped (Mo)",  value: "6", sub: "May",                      subDot: "healthy", trend: { dir: "up",   text: "on pace" } },
   { label: "Avg Engagement",      value: "—", sub: "v2 metric — coming soon",  subDot: "stale",   trend: { dir: "flat", text: "tracking soon" } },
 ];
 
 export const PULSE_CARDS: PulseCard[] = [
   {
     id: "p1",
-    headline: "FTC opens inquiry into AI agents marketing as ‘autonomous,’ citing consumer-deception risks",
-    source: "Wall Street Journal",
-    publishedAt: "2026-04-24T05:30:00Z",
-    sourceUrl: "https://wsj.com/",
-    whyItMatters: "Reframes the agentic-AI narrative from capability to liability.",
-    summary: "The FTC’s inquiry isn’t just about labels. It’s the first regulatory move to interrogate the gap between what agentic AI is *marketed* to do and what it actually delivers under real-world load. Comms teams writing AI launch copy this quarter just inherited a new compliance lens — and it’s stricter than the EU AI Act on consumer-deception grounds.",
+    headline: "Sinch: 74% of enterprises have rolled back live AI customer comms agents",
+    source: "PR Newswire / Sinch",
+    publishedAt: "2026-05-09T09:00:00Z",
+    sourceUrl: "https://www.prnewswire.com/news-releases/sinch-research-reveals-74-of-enterprises-have-rolled-back-live-ai-customer-communications-agents-302770730.html",
+    whyItMatters: "The 'AI agent revolution' is quietly being undone in customer-facing comms.",
+    summary: "New Sinch research finds 74% of enterprises have pulled or shut down a live AI customer communications agent after deployment — citing governance failures, not technology limits. The PR narrative is still 'AI is unstoppable.' The operating reality, especially in comms-adjacent functions, is far messier.",
     stance: "contrarian",
-    draft: "Everyone’s reading the FTC’s agentic-AI inquiry as a slowdown signal. They’re wrong.\n\nThis is the moment communications leaders have been waiting for. Until now, every AI launch has been graded on capability — “look how autonomous our agent is.” The FTC just made *honesty* the new differentiator. The brands that will win the next 18 months aren’t the ones with the most autonomous agents; they’re the ones whose marketing copy survives a deposition.\n\nThree shifts to make this week:\n\n1. Audit your AI product copy for words your agent can’t fully back up: “autonomous,” “intelligent,” “reasoning,” “decides.” If your engineers wouldn’t sign off on the literal claim, your comms team shouldn’t ship it.\n\n2. Build a capability ladder — what the agent does, what it assists with, what a human still owns. Show it on the marketing page. The transparency *is* the trust signal.\n\n3. Get your legal partner in the room *before* the launch deck, not after. The cost of a redo is one week. The cost of an FTC consent order is your roadmap.\n\nThe companies that overcorrect into vague “AI-powered” mush will lose. The ones that get specific — about what the agent does, how, and where the human stays — will own the next category.",
+    draft: "Every keynote this spring told you AI agents were inevitable in customer communications.\n\nSinch just dropped research showing 74% of enterprises have already pulled the plug on one.\n\nNot because the agents couldn't write. Because nobody could answer the simplest questions a comms leader asks before launch: who reviews the draft? Who's liable when it goes wrong? Whose voice does it speak in?\n\nThree reads on this for comms leaders:\n\n1. The bottleneck isn't the model. It's governance. The companies that paused their agents didn't lose the tech race — they noticed they'd skipped the comms-and-legal review before going live.\n\n2. The contrarian career move is being the person who slows it down. Every comms team has an AI champion racing to ship. The next 18 months will reward the person willing to put the brake pedal next to the gas — the one asking who approves the AI's draft to the public.\n\n3. The vendors won't tell you this number. The downstream agencies and platforms will keep telling you 'agents are working at scale' because their pipeline depends on you believing it.\n\nIf your AI agent is in front of customers, it's a comms problem long before it's a technology problem.",
     status: "fresh",
   },
   {
     id: "p2",
-    headline: "Edelman Trust Barometer: trust in CEO communications drops 9 points YoY, AI cited as top driver",
-    source: "Edelman",
-    publishedAt: "2026-04-23T13:00:00Z",
-    sourceUrl: "https://edelman.com/",
-    whyItMatters: "Synthetic CEO content is eroding the trust premium leaders had over institutions.",
-    summary: "Edelman’s annual barometer landed Tuesday. The headline number — a 9-point YoY drop in CEO communication trust — buries the more important finding: respondents who *suspected* AI involvement in CEO content trusted the leader 22 points less than those who didn’t. The category that brought CEO comms back from the 2008 lows is the same one undoing it.",
+    headline: "O'Dwyer's: The deepfake era has arrived — and PR is the front line",
+    source: "O'Dwyer's",
+    publishedAt: "2026-05-11T08:00:00Z",
+    sourceUrl: "https://www.odwyerpr.com/story/public/24726/2026-05-11/deepfake-era-has-arrived-pr-is-front-line.html",
+    whyItMatters: "Crisis comms playbooks built for misinformation don't survive synthetic CEO statements.",
+    summary: "In the first four months of 2026, deepfakes crossed the line from emerging threat to operational attack vector — used against public companies. PR is now the function that has to detect, debunk, and respond inside an hour. Most teams aren't equipped.",
     stance: "standard",
-    draft: "Edelman’s 2026 Trust Barometer dropped this week, and one stat should sit at the center of every comms leader’s quarterly review.\n\nTrust in CEO communications fell 9 points year-over-year. The driver isn’t politics, it isn’t economic anxiety, and it isn’t “the news cycle.” It’s a single perception: stakeholders increasingly suspect their CEO’s words aren’t actually their CEO’s words.\n\nWhen respondents *suspected* AI involvement in a CEO statement, trust dropped 22 points. Twenty-two.\n\nThe path forward isn’t to ban AI from the executive comms function — that ship sailed. The path is radical transparency about *what* AI does and *what* the principal does.",
+    draft: "The deepfake call is no longer theoretical for communications leaders.\n\nO'Dwyer's reported this week that in the first four months of 2026, synthetic CEO statements moved from proof-of-concept to operational attack vector. The playbook your team built for misinformation was designed for fake quotes, screenshot edits, and bad reporting. None of those move at the speed of a 90-second deepfake video that looks like your CEO.\n\nThree shifts to make in the next two weeks:\n\n1. Define an internal authentication signal. A code phrase, a verified channel, a known cadence — anything that gives journalists and partners a way to know a statement is real. The biggest weakness in deepfake response isn't tech, it's that nobody pre-positioned a 'how to verify' anchor.\n\n2. Pre-write your debunk template. The first 60 minutes after a deepfake hits is when your audience decides whether to trust your eventual response. If you're drafting from scratch, you're already losing.\n\n3. Brief your CEO and exec team on what's already loose. Audio clones from publicly available interviews. Video synthesis from any podcast appearance. Tell them what's possible so they don't assume 'they wouldn't do that to me.'\n\nThis is no longer 'monitor and prepare.' It's an active threat against your principals' voice — and PR owns the response.",
     status: "fresh",
   },
   {
     id: "p3",
-    headline: "Google rolls out AI Overviews to 40 more languages — publisher traffic study shows 34% click loss",
-    source: "Search Engine Land",
-    publishedAt: "2026-04-23T08:15:00Z",
-    sourceUrl: "https://searchengineland.com/",
-    whyItMatters: "Owned media strategy needs a rethink — fast.",
-    summary: "AI Overviews are now in 40 new markets, and a fresh Sistrix study quantifies the damage to publishers: average 34% click-through loss on informational queries even when sites rank #1. This is the inflection point comms and content leaders feared was a year out. It’s now.",
+    headline: "OpenAI and Anthropic both launch enterprise AI consulting arms",
+    source: "TechCrunch",
+    publishedAt: "2026-05-04T13:00:00Z",
+    sourceUrl: "https://techcrunch.com/2026/05/04/anthropic-and-openai-are-both-launching-joint-ventures-for-enterprise-ai-services/",
+    whyItMatters: "The AI labs just became competitors of Accenture, Deloitte — and your firm's AI advisory practice.",
+    summary: "Within days of each other, Anthropic and OpenAI both formed joint ventures to sell and install AI tools to enterprises. Anthropic partnered with Wall Street firms; OpenAI launched DeployCo with $4B in capital. The model providers are moving downstream into implementation work that consulting firms — and growing AI advisory practices inside PR firms — have been monetizing.",
     stance: "standard",
-    draft: "If your 2026 content strategy is built on driving traffic to your blog, you’re optimizing for a metric that no longer maps to outcomes.\n\nGoogle’s AI Overviews expanded to 40 new markets this week.",
+    draft: "If your PR firm built an AI advisory practice in the last 18 months, your competitive set just changed.\n\nThis week, OpenAI launched DeployCo with $4 billion in capital. Anthropic spun up a joint venture with Wall Street firms doing the same work. Both are now in the AI implementation business — not just selling the model, but doing the configuration, change management, and rollout that consultancies, agencies, and PR firms have been pricing as $50K–$500K engagements.\n\nThree implications worth thinking about:\n\n1. Your 'we'll help you adopt AI' pitch now has a $4B competitor with the source model under its arm. The differentiation can't be 'we know AI.' It has to be 'we know your industry, your audiences, and your reputation risks.'\n\n2. The labs will sell to your clients directly. Expect inbound from clients asking 'should we go straight to OpenAI for this?' The honest answer is sometimes yes — and the firms that say so will keep the relationship for the strategy work the labs can't do.\n\n3. Repositioning matters more than capability building. The advisory practices that survive aren't the ones with the most certifications. They're the ones whose insight about *what to communicate* about an AI rollout can't be replaced by the people building the tool.\n\nThe AI labs are now in your competitive set. Plan accordingly.",
     status: "fresh",
   },
   {
     id: "p4",
-    headline: "Inside Meta’s new comms playbook: ‘AI-native’ release notes, no human spokesperson on calls under $50M",
-    source: "The Information",
-    publishedAt: "2026-04-22T19:00:00Z",
-    sourceUrl: "https://theinformation.com/",
-    whyItMatters: "A bellwether is publicly removing humans from the loop. The pushback will be loud.",
-    summary: "The Information’s leaked memo describes Meta restructuring product comms around AI-drafted release notes and removing human spokespeople from sub-$50M product calls. Whatever you think of the move, every comms leader will be asked about it on their next exec sync.",
-    stance: "contrarian",
-    draft: "The Meta comms memo leak this week is being read as a bellwether. “Big tech is removing humans from the loop. The rest of us will follow.”\n\nNo. We won’t. And we shouldn’t.",
+    headline: "AI in Communications Education Index 2026 — most programs still bolt-on",
+    source: "EPR Research / Everything-PR",
+    publishedAt: "2026-05-07T10:00:00Z",
+    sourceUrl: "https://everything-pr.com/epr-post-the-ai-in-communications-education-index-2026/",
+    whyItMatters: "The talent pipeline arriving in 18 months barely had a single AI-native class.",
+    summary: "EPR Research's 2026 index grades U.S. PR, comms, advertising, and IMC programs on AI integration. Only a handful — Denver, Loyola Chicago — offer dedicated AI-in-comms concentrations. Most have added one elective. The grads entering the industry in 2027 will have less AI fluency than the ChatGPT-using interns you have right now.",
+    stance: "standard",
+    draft: "EPR Research just published the 2026 AI in Communications Education Index, and the headline isn't what most academic press releases want you to read.\n\nA handful of programs — the University of Denver, Loyola Chicago — are leading with dedicated AI-in-comms concentrations. The vast majority of comms, PR, advertising, and IMC programs have added one elective and called it a curriculum response.\n\nWhat this means for the next two years of hiring:\n\n1. Your incoming class of 2027 grads won't be AI-native by virtue of their degree. They'll be AI-curious individuals trying to teach themselves on top of a curriculum that assumes the industry didn't change in 2023.\n\n2. The gap between best-in-class programs and the median is widening — fast. Hire from a handful of named programs and you get a measurably different baseline. Hire from a median program and plan to do AI onboarding internally.\n\n3. Your existing junior talent who already use ChatGPT every day are more useful to you than next year's grads. Don't lose them while you wait for the pipeline to catch up.\n\nThe academy is lagging the industry by at least 24 months. Plan your talent strategy around that gap, not around hopes that it will close.",
     status: "fresh",
   },
   {
     id: "p5",
-    headline: "Anthropic publishes ‘Skills’ framework for enterprise AI deployment — early adopters report 3x time savings on internal comms",
-    source: "Anthropic",
-    publishedAt: "2026-04-22T14:00:00Z",
-    sourceUrl: "https://anthropic.com/",
-    whyItMatters: "Practical, repeatable, deploys this week — not 2027.",
-    summary: "Anthropic’s Skills framework lets enterprise teams package internal expertise into reusable AI capabilities. Three early adopters in the comms space report 3x speedups on routine deliverables.",
+    headline: "Trump admin moves further into AI oversight — will test Google, Microsoft, xAI models",
+    source: "CNBC",
+    publishedAt: "2026-05-05T15:00:00Z",
+    sourceUrl: "https://www.cnbc.com/2026/05/05/ai-oversight-trump-google-microsoft-xai.html",
+    whyItMatters: "Government testing of frontier models means new disclosure expectations for every enterprise AI rollout.",
+    summary: "The Trump administration is expanding federal AI oversight to require testing of Google, Microsoft, and xAI models. The framework is still being defined, but the direction is clear: enterprises deploying these models will face documentation and disclosure expectations that don't exist today. PR teams should expect to draft the public side of these disclosures within the next two quarters.",
     stance: "standard",
-    draft: "Anthropic shipped a framework this week called Skills, and if you lead a comms function, it’s the most directly applicable AI release of the quarter.",
+    draft: "Federal AI oversight is finally landing in something operational.\n\nThis week the Trump administration moved to test frontier models from Google, Microsoft, and xAI under a new regulatory framework. The mechanics are still being worked out, but the trajectory is now clear: enterprises that use these models in customer-facing or sensitive work will be asked to disclose how they're using them, what testing they've done, and what fail-safes they have in place.\n\nThree near-term implications for comms leaders:\n\n1. Your AI use-case inventory is about to be a regulatory artifact, not just an internal document. Who's using what model, for what purpose, with what review process? The answer needs to be writeable.\n\n2. The AI rollout press releases that worked in 2024 won't survive 2027. 'We're using AI to do X' is no longer enough; expect to need 'we tested it for Y risks and put Z controls in place.' That's a comms structural change, not a one-time write.\n\n3. Your legal and policy partners just became your closest collaborators. The teams that move on this proactively — instead of waiting for the framework to harden — will be the ones whose enterprises don't have to retrofit messaging at the last minute.\n\nThis isn't the EU AI Act. It's an administration moving fast on a smaller surface. PR teams that lean in now will look prescient in Q3.",
     status: "fresh",
   },
 ];

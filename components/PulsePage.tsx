@@ -57,15 +57,57 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
   const [copied, setCopied] = useState(false);
   const [stance, setStance] = useState(card.stance);
   const [saved, setSaved] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  // Editable draft — initialized from the static card content, mutated locally.
+  // Persistence lands with the Supabase wiring sprint.
+  const [draft, setDraft] = useState(card.draft);
+  const edited = draft !== card.draft;
 
   const copyDraft = () => {
-    navigator.clipboard?.writeText(card.draft).catch(() => {});
+    navigator.clipboard?.writeText(draft).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1400);
   };
 
   const flip = () => setStance(s => s === "contrarian" ? "standard" : "contrarian");
-  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 1800); };
+
+  // Save as cue → open Buffer's compose URL pre-filled with the (possibly edited)
+  // draft + source link. Uses Buffer's classic /add endpoint, which still routes
+  // to the right compose flow whether the user is on Buffer Publish or buffer.com.
+  const save = () => {
+    const text = encodeURIComponent(draft);
+    const url = encodeURIComponent(card.sourceUrl);
+    const bufferUrl = `https://buffer.com/add?text=${text}&url=${url}`;
+    window.open(bufferUrl, "_blank", "noopener,noreferrer");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  // Regenerate, Send to contact, Dismiss — visual feedback now,
+  // real backends arrive with the Supabase/Buffer wiring sprint.
+  const regenerate = () => {
+    setRegenerating(true);
+    setTimeout(() => setRegenerating(false), 1400);
+  };
+  const sendToContact = () => {
+    setSent(true);
+    setTimeout(() => setSent(false), 1800);
+  };
+  const dismiss = () => {
+    setDismissed(true);
+  };
+
+  if (dismissed) {
+    return (
+      <article className="pulse-card pulse-dismissed">
+        <span className="pulse-source">Dismissed · {card.headline.slice(0, 60)}…</span>
+        <button className="btn-quiet" onClick={() => setDismissed(false)}>Undo</button>
+      </article>
+    );
+  }
 
   return (
     <article className={`pulse-card ${stanceClass(stance)}`}>
@@ -89,16 +131,27 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
       </div>
 
       <button className="pulse-draft-toggle" onClick={() => setExpanded(e => !e)}>
-        <span className="draft-label">DRAFT · {wordCount(card.draft)} words</span>
-        <span className="draft-preview">{draftPreview(card.draft)}</span>
+        <span className="draft-label">
+          DRAFT · {wordCount(draft)} words{edited ? " · edited" : ""}
+        </span>
+        <span className="draft-preview">{draftPreview(draft)}</span>
         <Icon name={expanded ? "x" : "arrow-right"} size={13} className="draft-chev" />
       </button>
 
       {expanded && (
-        <div className="pulse-draft-body">
-          {card.draft.split("\n").map((p, i) =>
-            p.trim() ? <p key={i}>{p}</p> : <div key={i} className="draft-spacer" />
-          )}
+        <div className="pulse-draft-body pulse-draft-edit">
+          <textarea
+            className="pulse-draft-textarea"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            spellCheck
+            aria-label="Edit the LinkedIn draft"
+          />
+          <div className="pulse-draft-hint">
+            {edited
+              ? "Edited locally. ‘Save as cue’ opens Buffer with your changes."
+              : "Edit any line. ‘Save as cue’ opens Buffer pre-filled with the result."}
+          </div>
         </div>
       )}
 
@@ -109,13 +162,17 @@ function PulseCardFull({ card, defaultExpanded = false }: { card: PulseCard; def
         <button className="btn-quiet" onClick={copyDraft}>
           <Icon name={copied ? "check" : "copy"} size={14} /> {copied ? "Copied" : "Copy"}
         </button>
-        <button className="btn-quiet"><Icon name="refresh" size={14} /> Regenerate</button>
+        <button className="btn-quiet" onClick={regenerate} disabled={regenerating}>
+          <Icon name="refresh" size={14} /> {regenerating ? "Regenerating…" : "Regenerate"}
+        </button>
         <button className="btn-quiet flip" onClick={flip}><Icon name="shuffle" size={14} /> Flip stance</button>
-        <button className="btn-quiet"><Icon name="user" size={14} /> Send to contact</button>
+        <button className="btn-quiet" onClick={sendToContact}>
+          <Icon name={sent ? "check" : "user"} size={14} /> {sent ? "Quickie queued" : "Send to contact"}
+        </button>
         <a className="btn-quiet ghost" href={card.sourceUrl} target="_blank" rel="noreferrer">
           Read source <Icon name="arrow-right" size={12} />
         </a>
-        <button className="btn-quiet pulse-dismiss"><Icon name="x" size={14} /></button>
+        <button className="btn-quiet pulse-dismiss" onClick={dismiss} aria-label="Dismiss"><Icon name="x" size={14} /></button>
       </div>
     </article>
   );

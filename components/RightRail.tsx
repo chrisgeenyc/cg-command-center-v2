@@ -7,6 +7,20 @@ const channelIcon = (ch: string) => ({
   email: "mail", linkedin: "linkedin", text: "text", call: "phone",
 }[ch] || "mail");
 
+// Build the deep-link / external URL for a Quickie's channel action.
+// Clicking the card body fires this. Live until v2 (Buffer/HubSpot wiring).
+const channelHref = (q: QuickieItem) => {
+  const subject = encodeURIComponent(`Quick note — ${q.action}`);
+  const body = encodeURIComponent(`Hi ${q.who.split(/[·,]/)[0].trim()},\n\n`);
+  switch (q.channel) {
+    case "email":    return `mailto:?subject=${subject}&body=${body}`;
+    case "linkedin": return `https://www.linkedin.com/messaging/`;
+    case "text":     return `sms:`;
+    case "call":     return `tel:`;
+    default:         return null;
+  }
+};
+
 const REL_LABEL: Record<string, string> = { active: "active", past: "past", partner: "partner", network: "network", mentor: "mentor" };
 const TOUCH_LABEL: Record<string, string> = { value: "value drop", checkin: "check-in", ask: "ask" };
 const TEMP_LABEL: Record<string, string> = { warm: "warm", cooling: "cooling", cold: "cold" };
@@ -22,9 +36,27 @@ function QuickieChips({ q, compact = false }: { q: QuickieItem; compact?: boolea
 }
 
 function Quickie({ q, onToggle, tints }: { q: QuickieItem; onToggle: () => void; tints: boolean }) {
+  const href = channelHref(q);
+  const openChannel = () => {
+    if (!href) return;
+    // mailto / tel / sms protocols don't need a new tab; web URLs do.
+    if (href.startsWith("http")) window.open(href, "_blank", "noopener");
+    else window.location.href = href;
+  };
   return (
-    <div className={`quickie ${tints ? `tinted-${q.tint}` : ""} ${q.done ? "done" : ""}`}>
-      <button className={`check ${q.done ? "checked" : ""}`} onClick={onToggle} aria-label="Mark done">
+    <div
+      className={`quickie ${tints ? `tinted-${q.tint}` : ""} ${q.done ? "done" : ""}`}
+      onClick={openChannel}
+      role={href ? "link" : undefined}
+      tabIndex={href ? 0 : undefined}
+      onKeyDown={(e) => { if (href && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openChannel(); } }}
+      style={{ cursor: href ? "pointer" : "default" }}
+    >
+      <button
+        className={`check ${q.done ? "checked" : ""}`}
+        onClick={(e) => { e.stopPropagation(); onToggle(); }}
+        aria-label="Mark done"
+      >
         <Icon name="check" size={11} />
       </button>
       <div>
@@ -37,7 +69,7 @@ function Quickie({ q, onToggle, tints }: { q: QuickieItem; onToggle: () => void;
           <span>{q.trigger}</span>
         </div>
       </div>
-      <div className="quickie-channel" title={q.channel}>
+      <div className="quickie-channel" title={`Open ${q.channel}`}>
         <Icon name={channelIcon(q.channel)} size={12} />
       </div>
     </div>
