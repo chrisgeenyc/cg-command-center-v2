@@ -43,56 +43,29 @@ export async function GET() {
 
 export async function POST() {
   try {
-    // Get org ID and Channel type fields via introspection
-    const introData = await bufferQuery(`
+    // Full schema introspection to discover available queries
+    const schemaData = await bufferQuery(`
       query {
-        organizations { id name }
-        __type(name: "Channel") { fields { name } }
-        __type2: __type(name: "ChannelsInput") { inputFields { name } }
-      }
-    `);
-
-    const orgId: string = introData?.organizations?.[0]?.id ?? '';
-    const channelFields: string[] = (introData?.__type?.fields ?? []).map(
-      (f: { name: string }) => f.name
-    );
-
-    const usernameField = channelFields.find(f =>
-      ['handle', 'username', 'serviceUsername', 'screenName'].includes(f)
-    ) ?? null;
-    const queueField = channelFields.find(f =>
-      ['queue', 'updates', 'scheduledUpdates', 'pendingUpdates'].includes(f)
-    ) ?? null;
-
-    const channelSubfields = ['id', 'name', 'service'];
-    if (usernameField) channelSubfields.push(usernameField);
-    const queueSubquery = queueField ? `${queueField} { id text scheduledAt status }` : '';
-
-    const data = await bufferQuery(`
-      query {
-        channels(input: { organizationId: "${orgId}" }) {
-          ${channelSubfields.join('\n          ')}
-          ${queueSubquery}
+        __schema {
+          queryType {
+            fields {
+              name
+              args { name type { name kind ofType { name kind } } }
+            }
+          }
         }
       }
     `);
 
-    const channels = data?.channels ?? [];
-    const queue = queueField
-      ? channels.flatMap((c: Record<string, unknown[]>) => (c[queueField] as unknown[]) ?? [])
-      : [];
+    const queryFields: Array<{ name: string; args: unknown[] }> =
+      schemaData?.__schema?.queryType?.fields ?? [];
 
+    // Return schema discovery for debugging
     const snapshot = {
-      queue,
+      queue: [],
       sent: [],
-      orgId,
-      channelFields,
-      profiles: channels.map((c: Record<string, unknown>) => ({
-        id: c.id,
-        service: c.service,
-        username: usernameField ? c[usernameField] : null,
-        name: c.name,
-      })),
+      profiles: [],
+      _schemaQueries: queryFields.map(f => f.name),
     };
 
     const { error } = await supabaseAdmin
@@ -101,7 +74,7 @@ export async function POST() {
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true, queue_count: queue.length });
+    return NextResponse.json({ ok: true, queue_count: 0, _schemaQueries: snapshot._schemaQueries });
   } catch (err) {
     const msg = err instanceof Error ? err.message : JSON.stringify(err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
