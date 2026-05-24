@@ -43,29 +43,44 @@ export async function GET() {
 
 export async function POST() {
   try {
-    // Full schema introspection to discover available queries
-    const schemaData = await bufferQuery(`
+    // Get account info (org ID) then fetch channels + posts
+    const accountData = await bufferQuery(`
       query {
-        __schema {
-          queryType {
-            fields {
-              name
-              args { name type { name kind ofType { name kind } } }
-            }
-          }
-        }
+        account { id name currentOrganization { id name } }
       }
     `);
+    const orgId: string =
+      accountData?.account?.currentOrganization?.id ?? accountData?.account?.id ?? '';
 
-    const queryFields: Array<{ name: string; args: unknown[] }> =
-      schemaData?.__schema?.queryType?.fields ?? [];
+    const [channelsData, postsData] = await Promise.all([
+      bufferQuery(`
+        query {
+          channels(input: { organizationId: "${orgId}" }) {
+            id name service
+          }
+        }
+      `).catch(() => ({ channels: [] })),
+      bufferQuery(`
+        query {
+          posts(input: { organizationId: "${orgId}", status: "pending" }) {
+            id text scheduledAt status
+            channel { id name service }
+          }
+        }
+      `).catch(() => ({ posts: [] })),
+    ]);
 
-    // Return schema discovery for debugging
+    const channels = channelsData?.channels ?? [];
+    const queue = postsData?.posts ?? [];
+
     const snapshot = {
-      queue: [],
+      queue,
       sent: [],
-      profiles: [],
-      _schemaQueries: queryFields.map(f => f.name),
+      profiles: channels.map((c: Record<string, unknown>) => ({
+        id: c.id,
+        service: c.service,
+        name: c.name,
+      })),
     };
 
     const { error } = await supabaseAdmin
@@ -74,7 +89,7 @@ export async function POST() {
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true, queue_count: 0, _schemaQueries: snapshot._schemaQueries });
+    return NextResponse.json({ ok: true, queue_count: queue.length, channel_count: channels.length });
   } catch (err) {
     const msg = err instanceof Error ? err.message : JSON.stringify(err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
