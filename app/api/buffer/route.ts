@@ -43,33 +43,54 @@ export async function GET() {
 
 export async function POST() {
   try {
+    // Introspect Channel type to find available fields
+    const introData = await bufferQuery(`
+      query {
+        __type(name: "Channel") {
+          fields { name }
+        }
+      }
+    `);
+    const channelFields: string[] = (introData?.__type?.fields ?? []).map(
+      (f: { name: string }) => f.name
+    );
+
+    // Build channel query with only fields that exist
+    const usernameField = channelFields.find(f =>
+      ['handle', 'username', 'serviceUsername', 'screenName'].includes(f)
+    ) ?? null;
+    const queueField = channelFields.find(f =>
+      ['queue', 'updates', 'scheduledUpdates', 'pendingUpdates'].includes(f)
+    ) ?? null;
+
+    const channelSubfields = ['id', 'name', 'service'];
+    if (usernameField) channelSubfields.push(usernameField);
+    const queueSubquery = queueField
+      ? `${queueField} { id text scheduledAt status }`
+      : '';
+
     const data = await bufferQuery(`
       query {
         channels {
-          id
-          name
-          service
-          serviceUsername
-          queue {
-            id
-            text
-            scheduledAt
-            status
-          }
+          ${channelSubfields.join('\n          ')}
+          ${queueSubquery}
         }
       }
     `);
 
     const channels = data?.channels ?? [];
-    const queue = channels.flatMap((c: { queue?: unknown[] }) => c.queue ?? []);
+    const queue = queueField
+      ? channels.flatMap((c: Record<string, unknown[]>) => (c[queueField] as unknown[]) ?? [])
+      : [];
 
     const snapshot = {
       queue,
       sent: [],
+      channelFields,
       profiles: channels.map((c: Record<string, unknown>) => ({
         id: c.id,
         service: c.service,
-        username: c.serviceUsername,
+        username: usernameField ? c[usernameField] : null,
         name: c.name,
       })),
     };
