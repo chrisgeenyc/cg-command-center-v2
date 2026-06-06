@@ -439,19 +439,15 @@ export default function PulsePage() {
 
   const queue = liveBuffer ? mapBufferQueue(liveBuffer) : PULSE_QUEUE;
 
+  const allStories = [...liveStories['ai-comms'], ...liveStories['ai-jobs']];
+
   const filters = [
-    { id: "all", label: "Today's stories", count: PULSE_CARDS.length },
-    { id: "standard", label: "Standard", count: PULSE_CARDS.filter(c => c.stance === "standard").length },
-    { id: "contrarian", label: "Contrarian", count: PULSE_CARDS.filter(c => c.stance === "contrarian").length },
+    { id: "all", label: "Today's stories", count: allStories.length },
     { id: "ai-comms", label: "AI + Comms", count: liveStories['ai-comms'].length },
     { id: "ai-jobs", label: "AI + Jobs", count: liveStories['ai-jobs'].length },
     { id: "saved", label: "Saved cues", count: PULSE_SAVED_CUES.length },
     { id: "posted", label: "Posted today", count: 0 },
   ];
-
-  const visible = filter === "saved" || filter === "posted" || filter === "ai-comms" || filter === "ai-jobs"
-    ? []
-    : filter === "all" ? PULSE_CARDS : PULSE_CARDS.filter(c => c.stance === filter);
 
   return (
     <main className="main">
@@ -514,37 +510,17 @@ export default function PulsePage() {
         <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--r-md)", padding: 28, textAlign: "center", color: "var(--ink-3)", fontSize: 13.5 }}>
           Nothing posted today yet. The week&apos;s ahead of plan — 3 of 5 slots filled.
         </div>
-      ) : filter === "ai-comms" ? (
-        <div className="pulse-stack">
-          {liveStories['ai-comms'].length > 0
-            ? liveStories['ai-comms'].map(s => <BriefingCard key={s.id} story={s} />)
-            : <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-3)', fontSize: 13.5 }}>No AI + Comms stories yet. Run the sync to fetch today&apos;s briefing.</div>
-          }
-        </div>
-      ) : filter === "ai-jobs" ? (
-        <div className="pulse-stack">
-          {liveStories['ai-jobs'].length > 0
-            ? liveStories['ai-jobs'].map(s => <BriefingCard key={s.id} story={s} />)
-            : <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-3)', fontSize: 13.5 }}>No AI &amp; Jobs stories yet. Run the sync to fetch today&apos;s briefing.</div>
-          }
-        </div>
       ) : (
-        <>
-          <div className="pulse-stack">
-            {visible.map(c => <PulseCardFull key={c.id} card={c} defaultExpanded={false} />)}
-          </div>
-          <section className="cues-section">
-            <div className="section-head">
-              <span className="section-dot" style={{ background: "var(--violet-1)" }} />
-              <h3 className="section-title">Saved cues</h3>
-              <span className="section-count">{PULSE_SAVED_CUES.length} parked · click to manicure</span>
-              <span className="section-action" style={{ color: "var(--ink-3)" }}>auto-archive after 14 days unposted</span>
-            </div>
-            <div className="cues-list">
-              {PULSE_SAVED_CUES.map(c => <SavedCueCard key={c.id} cue={c} />)}
-            </div>
-          </section>
-        </>
+        <div className="pulse-stack">
+          {(() => {
+            const stories = filter === "ai-comms" ? liveStories['ai-comms']
+              : filter === "ai-jobs" ? liveStories['ai-jobs']
+              : allStories;
+            return stories.length > 0
+              ? stories.map(s => <BriefingCard key={s.id} story={s} />)
+              : <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-3)', fontSize: 13.5 }}>No stories yet — run the morning sync to fetch today&apos;s briefing.</div>;
+          })()}
+        </div>
       )}
 
       <div className="pulse-archive">
