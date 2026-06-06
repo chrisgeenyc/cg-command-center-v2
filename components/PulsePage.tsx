@@ -432,9 +432,16 @@ export default function PulsePage() {
 
   useEffect(() => {
     fetch('/api/briefings')
-      .then(r => r.json())
-      .then((d: BriefingsData) => { if (d['ai-comms'] || d['ai-jobs']) setLiveStories(d); })
-      .catch(() => {});
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d: BriefingsData) => {
+        const comms = Array.isArray(d['ai-comms']) ? d['ai-comms'] : [];
+        const jobs = Array.isArray(d['ai-jobs']) ? d['ai-jobs'] : [];
+        setLiveStories({ 'ai-comms': comms, 'ai-jobs': jobs });
+      })
+      .catch(err => console.error('[Pulse] briefings fetch failed:', err));
   }, []);
 
   const queue = liveBuffer ? mapBufferQueue(liveBuffer) : PULSE_QUEUE;

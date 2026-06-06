@@ -84,7 +84,7 @@ function mapToStory(result: TavilyResult, briefType: string, section: string): B
 
 export async function GET() {
   try {
-    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabaseAdmin
       .from('briefing_stories')
       .select('*')
