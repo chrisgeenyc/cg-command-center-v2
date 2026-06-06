@@ -17,6 +17,22 @@ interface BufferSnapshot {
   synced_at?: string;
 }
 
+interface BriefingStory {
+  id: string;
+  brief_type: string;
+  section: string;
+  headline: string;
+  url: string;
+  publication: string;
+  published_date: string;
+  summary: string;
+}
+
+interface BriefingsData {
+  'ai-comms': BriefingStory[];
+  'ai-jobs': BriefingStory[];
+}
+
 function mapBufferQueue(snapshot: BufferSnapshot): QueueSlot[] {
   const slots: QueueSlot[] = [];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -354,6 +370,36 @@ function SavedCueCard({ cue }: { cue: SavedCue }) {
   );
 }
 
+function BriefingCard({ story }: { story: BriefingStory }) {
+  const sectionLabel =
+    story.section === 'displacement' ? 'Job Displacement' :
+    story.section === 'legislation' ? 'Legislation' :
+    story.section === 'organizing' ? 'Labor Organizing' : null;
+
+  return (
+    <article className="pulse-card">
+      <div className="pulse-edge" />
+      <div className="pulse-head">
+        <div className="pulse-meta">
+          <span className="pulse-source">{story.publication}</span>
+          {story.published_date && <><span className="pulse-sep">·</span><span>{story.published_date}</span></>}
+        </div>
+        {sectionLabel && (
+          <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, background: 'var(--surface-2, #f5f5f5)', color: 'var(--ink-2)' }}>
+            {sectionLabel}
+          </span>
+        )}
+      </div>
+      <h3 className="pulse-headline">
+        <a href={story.url} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+          {story.headline}
+        </a>
+      </h3>
+      <p className="pulse-summary">{story.summary}</p>
+    </article>
+  );
+}
+
 export function TodayPulseModule({ navigate }: { navigate?: (id: string) => void }) {
   const card = PULSE_CARDS.find(c => c.stance === "contrarian") || PULSE_CARDS[0];
   return (
@@ -375,11 +421,19 @@ export default function PulsePage() {
   const [filter, setFilter] = useState("all");
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [liveBuffer, setLiveBuffer] = useState<BufferSnapshot | null>(null);
+  const [liveStories, setLiveStories] = useState<BriefingsData>({ 'ai-comms': [], 'ai-jobs': [] });
 
   useEffect(() => {
     fetch('/api/buffer')
       .then(r => r.json())
       .then((d: BufferSnapshot) => { if (d.queue?.length || d.sent?.length) setLiveBuffer(d); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/briefings')
+      .then(r => r.json())
+      .then((d: BriefingsData) => { if (d['ai-comms'] || d['ai-jobs']) setLiveStories(d); })
       .catch(() => {});
   }, []);
 
@@ -389,15 +443,15 @@ export default function PulsePage() {
     { id: "all", label: "Today's stories", count: PULSE_CARDS.length },
     { id: "standard", label: "Standard", count: PULSE_CARDS.filter(c => c.stance === "standard").length },
     { id: "contrarian", label: "Contrarian", count: PULSE_CARDS.filter(c => c.stance === "contrarian").length },
+    { id: "ai-comms", label: "AI + Comms", count: liveStories['ai-comms'].length },
+    { id: "ai-jobs", label: "AI + Jobs", count: liveStories['ai-jobs'].length },
     { id: "saved", label: "Saved cues", count: PULSE_SAVED_CUES.length },
     { id: "posted", label: "Posted today", count: 0 },
   ];
 
-  const visible = filter === "saved" || filter === "posted"
+  const visible = filter === "saved" || filter === "posted" || filter === "ai-comms" || filter === "ai-jobs"
     ? []
-    : filter === "all"
-      ? PULSE_CARDS
-      : PULSE_CARDS.filter(c => c.stance === filter);
+    : filter === "all" ? PULSE_CARDS : PULSE_CARDS.filter(c => c.stance === filter);
 
   return (
     <main className="main">
@@ -459,6 +513,20 @@ export default function PulsePage() {
       ) : filter === "posted" ? (
         <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--r-md)", padding: 28, textAlign: "center", color: "var(--ink-3)", fontSize: 13.5 }}>
           Nothing posted today yet. The week&apos;s ahead of plan — 3 of 5 slots filled.
+        </div>
+      ) : filter === "ai-comms" ? (
+        <div className="pulse-stack">
+          {liveStories['ai-comms'].length > 0
+            ? liveStories['ai-comms'].map(s => <BriefingCard key={s.id} story={s} />)
+            : <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-3)', fontSize: 13.5 }}>No AI + Comms stories yet. Run the sync to fetch today&apos;s briefing.</div>
+          }
+        </div>
+      ) : filter === "ai-jobs" ? (
+        <div className="pulse-stack">
+          {liveStories['ai-jobs'].length > 0
+            ? liveStories['ai-jobs'].map(s => <BriefingCard key={s.id} story={s} />)
+            : <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-3)', fontSize: 13.5 }}>No AI &amp; Jobs stories yet. Run the sync to fetch today&apos;s briefing.</div>
+          }
         </div>
       ) : (
         <>

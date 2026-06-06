@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   }
 
   const base = new URL(req.url).origin;
-  const routes = ['/api/asana', '/api/hubspot', '/api/buffer'];
+  const routes = ['/api/asana', '/api/hubspot', '/api/buffer', '/api/briefings'];
 
   const results = await Promise.allSettled(
     routes.map(route =>

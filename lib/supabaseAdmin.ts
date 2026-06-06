@@ -36,6 +36,18 @@
     created_at   timestamptz default now(),
     updated_at   timestamptz default now()
   );
+
+  create table if not exists briefing_stories (
+    id uuid primary key default gen_random_uuid(),
+    brief_type text not null,
+    section text default 'top-stories',
+    headline text,
+    url text,
+    publication text,
+    published_date text,
+    summary text,
+    synced_at timestamptz default now()
+  );
 */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
