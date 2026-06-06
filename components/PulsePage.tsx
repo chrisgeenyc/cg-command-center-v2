@@ -376,7 +376,6 @@ function BriefingCard({ story }: { story: BriefingStory }) {
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [scheduled, setScheduled] = useState(false);
 
   const sectionLabel =
     story.section === 'displacement' ? 'Job Displacement' :
@@ -421,12 +420,23 @@ function BriefingCard({ story }: { story: BriefingStory }) {
     setTimeout(() => setCopied(false), 1400);
   };
 
-  const scheduleInBuffer = () => {
-    const text = encodeURIComponent(draft);
-    const link = encodeURIComponent(story.url);
-    window.open(`https://buffer.com/add?text=${text}&url=${link}`, '_blank', 'noopener,noreferrer');
-    setScheduled(true);
-    setTimeout(() => setScheduled(false), 2000);
+  const [taplioStatus, setTaplioStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  const sendToTaplio = async () => {
+    setTaplioStatus('sending');
+    try {
+      const res = await fetch('/api/taplio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: draft }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setTaplioStatus('sent');
+      setTimeout(() => setTaplioStatus('idle'), 3000);
+    } catch {
+      setTaplioStatus('error');
+      setTimeout(() => setTaplioStatus('idle'), 3000);
+    }
   };
 
   return (
@@ -492,9 +502,13 @@ function BriefingCard({ story }: { story: BriefingStory }) {
             style={{ width: '100%', boxSizing: 'border-box' }}
           />
           <div className="pulse-actions" style={{ marginTop: 10, flexWrap: 'wrap' }}>
-            <button className="btn-primary pulse-post" onClick={scheduleInBuffer}>
-              <Icon name={scheduled ? 'check' : 'calendar'} size={14} />
-              {scheduled ? 'Opened in Buffer' : 'Schedule in Buffer'}
+            <button
+              className="btn-primary pulse-post"
+              onClick={sendToTaplio}
+              disabled={taplioStatus === 'sending'}
+            >
+              <Icon name={taplioStatus === 'sent' ? 'check' : 'calendar'} size={14} />
+              {taplioStatus === 'sending' ? 'Sending…' : taplioStatus === 'sent' ? 'Sent to Taplio ✓' : taplioStatus === 'error' ? 'Failed — retry?' : 'Send to Taplio'}
             </button>
             <button className="btn-quiet" onClick={copyDraft}>
               <Icon name={copied ? 'check' : 'copy'} size={14} />
