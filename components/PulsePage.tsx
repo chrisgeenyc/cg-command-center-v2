@@ -371,10 +371,63 @@ function SavedCueCard({ cue }: { cue: SavedCue }) {
 }
 
 function BriefingCard({ story }: { story: BriefingStory }) {
+  const [stance, setStance] = useState<'affirming' | 'contrarian'>('affirming');
+  const [draft, setDraft] = useState('');
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [scheduled, setScheduled] = useState(false);
+
   const sectionLabel =
     story.section === 'displacement' ? 'Job Displacement' :
     story.section === 'legislation' ? 'Legislation' :
     story.section === 'organizing' ? 'Labor Organizing' : null;
+
+  const generateDraft = async (s: 'affirming' | 'contrarian') => {
+    setDrafting(true);
+    setDraftError('');
+    setDraft('');
+    try {
+      const res = await fetch('/api/draft-reaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headline: story.headline,
+          url: story.url,
+          summary: story.summary,
+          publication: story.publication,
+          stance: s,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setDraft(data.draft ?? '');
+    } catch (err) {
+      setDraftError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  const flipStance = async () => {
+    const next = stance === 'affirming' ? 'contrarian' : 'affirming';
+    setStance(next);
+    if (draft) await generateDraft(next);
+  };
+
+  const copyDraft = () => {
+    navigator.clipboard?.writeText(draft).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
+  };
+
+  const scheduleInBuffer = () => {
+    const text = encodeURIComponent(draft);
+    const link = encodeURIComponent(story.url);
+    window.open(`https://buffer.com/add?text=${text}&url=${link}`, '_blank', 'noopener,noreferrer');
+    setScheduled(true);
+    setTimeout(() => setScheduled(false), 2000);
+  };
 
   return (
     <article className="pulse-card">
@@ -396,6 +449,67 @@ function BriefingCard({ story }: { story: BriefingStory }) {
         </a>
       </h3>
       <p className="pulse-summary">{story.summary}</p>
+
+      {!draft && !drafting && (
+        <div className="pulse-actions" style={{ marginTop: 12 }}>
+          <button className="btn-primary pulse-post" onClick={() => { setStance('affirming'); generateDraft('affirming'); }}>
+            <Icon name="zap" size={14} /> Draft reaction
+          </button>
+          <a className="btn-quiet ghost" href={story.url} target="_blank" rel="noreferrer">
+            Read source <Icon name="arrow-right" size={12} />
+          </a>
+        </div>
+      )}
+
+      {drafting && (
+        <div style={{ marginTop: 12, padding: '10px 0', fontSize: 13, color: 'var(--ink-3)' }}>
+          Drafting your {stance} take…
+        </div>
+      )}
+
+      {draftError && (
+        <div style={{ marginTop: 12, padding: '10px 0', fontSize: 13, color: 'var(--dot-risk)' }}>
+          {draftError}
+        </div>
+      )}
+
+      {draft && !drafting && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-3)' }}>
+              Draft · {stance === 'contrarian' ? 'Contrarian take' : 'Affirming take'}
+            </span>
+          </div>
+          <textarea
+            className="pulse-draft-textarea"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            spellCheck
+            rows={12}
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          />
+          <div className="pulse-actions" style={{ marginTop: 10, flexWrap: 'wrap' }}>
+            <button className="btn-primary pulse-post" onClick={scheduleInBuffer}>
+              <Icon name={scheduled ? 'check' : 'calendar'} size={14} />
+              {scheduled ? 'Opened in Buffer' : 'Schedule in Buffer'}
+            </button>
+            <button className="btn-quiet" onClick={copyDraft}>
+              <Icon name={copied ? 'check' : 'copy'} size={14} />
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            <button className="btn-quiet" onClick={flipStance}>
+              <Icon name="shuffle" size={14} />
+              {stance === 'affirming' ? 'Go contrarian' : 'Go affirming'}
+            </button>
+            <button className="btn-quiet" onClick={() => generateDraft(stance)}>
+              <Icon name="refresh" size={14} /> Regenerate
+            </button>
+            <a className="btn-quiet ghost" href={story.url} target="_blank" rel="noreferrer">
+              Read source <Icon name="arrow-right" size={12} />
+            </a>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
