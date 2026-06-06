@@ -1,0 +1,167 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
+
+interface TavilyResult {
+  title: string;
+  url: string;
+  content: string;
+  published_date?: string;
+  score: number;
+}
+
+interface TavilyResponse {
+  results: TavilyResult[];
+}
+
+interface BriefingStory {
+  brief_type: string;
+  section: string;
+  headline: string;
+  url: string;
+  publication: string;
+  published_date: string;
+  summary: string;
+}
+
+const PUB_MAP: Record<string, string> = {
+  'prweek.com': 'PR Week',
+  'provokemedia.com': 'PRovoke',
+  'prdaily.com': 'PR Daily',
+  'axios.com': 'Axios',
+  'wsj.com': 'WSJ',
+  'bloomberg.com': 'Bloomberg',
+  'forbes.com': 'Forbes',
+  'fastcompany.com': 'Fast Company',
+  'hbr.org': 'HBR',
+  'nytimes.com': 'NYT',
+  'reuters.com': 'Reuters',
+  'ft.com': 'FT',
+  'theguardian.com': 'The Guardian',
+  'ragan.com': 'Ragan',
+  'adage.com': 'AdAge',
+};
+
+function pubFromUrl(url: string): string {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    return PUB_MAP[host] ?? host;
+  } catch {
+    return url;
+  }
+}
+
+async function tavilySearch(query: string, maxResults: number): Promise<TavilyResult[]> {
+  const res = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.TAVILY_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      max_results: maxResults,
+      search_depth: 'basic',
+      topic: 'news',
+      days: new Date().getDay() === 1 ? 3 : 1,
+    }),
+  });
+  if (!res.ok) throw new Error(`Tavily error ${res.status}: ${await res.text()}`);
+  const data: TavilyResponse = await res.json();
+  return data.results ?? [];
+}
+
+function mapToStory(result: TavilyResult, briefType: string, section: string): BriefingStory {
+  return {
+    brief_type: briefType,
+    section,
+    headline: result.title,
+    url: result.url,
+    publication: pubFromUrl(result.url),
+    published_date: result.published_date ?? '',
+    summary: result.content?.slice(0, 400) ?? '',
+  };
+}
+
+export async function GET() {
+  try {
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('briefing_stories')
+      .select('*')
+      .gte('synced_at', cutoff)
+      .order('synced_at', { ascending: false });
+
+    if (error) throw error;
+
+    const grouped: { 'ai-comms': unknown[]; 'ai-jobs': unknown[] } = {
+      'ai-comms': [],
+      'ai-jobs': [],
+    };
+
+    for (const row of data ?? []) {
+      if (row.brief_type === 'ai-comms') grouped['ai-comms'].push(row);
+      else if (row.brief_type === 'ai-jobs') grouped['ai-jobs'].push(row);
+    }
+
+    return NextResponse.json(grouped);
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+  }
+}
+
+export async function POST() {
+  try {
+    // AI + Comms searches — run in parallel, dedupe by URL, take top 5 by score
+    const commsQueries = [
+      'AI communications PR strategy news',
+      'generative AI public relations marketing news',
+      'AI media relations crisis communications',
+    ];
+
+    const commsResultArrays = await Promise.all(
+      commsQueries.map(q => tavilySearch(q, 10))
+    );
+
+    const commsByUrl = new Map<string, TavilyResult>();
+    for (const results of commsResultArrays) {
+      for (const r of results) {
+        const existing = commsByUrl.get(r.url);
+        if (!existing || r.score > existing.score) {
+          commsByUrl.set(r.url, r);
+        }
+      }
+    }
+    const commsTop5 = Array.from(commsByUrl.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    // AI + Jobs searches — run in parallel
+    const [jobsDisplacement, jobsLegislation, jobsOrganizing] = await Promise.all([
+      tavilySearch('AI job displacement layoffs workers', 10),
+      tavilySearch('AI labor legislation workers protection bill', 5),
+      tavilySearch('union workers AI opposition organizing strike', 5),
+    ]);
+
+    const displacementTop5 = jobsDisplacement.sort((a, b) => b.score - a.score).slice(0, 5);
+    const legislationTop2 = jobsLegislation.sort((a, b) => b.score - a.score).slice(0, 2);
+    const organizingTop2 = jobsOrganizing.sort((a, b) => b.score - a.score).slice(0, 2);
+
+    const stories: BriefingStory[] = [
+      ...commsTop5.map(r => mapToStory(r, 'ai-comms', 'top-stories')),
+      ...displacementTop5.map(r => mapToStory(r, 'ai-jobs', 'displacement')),
+      ...legislationTop2.map(r => mapToStory(r, 'ai-jobs', 'legislation')),
+      ...organizingTop2.map(r => mapToStory(r, 'ai-jobs', 'organizing')),
+    ];
+
+    const { error } = await supabaseAdmin.from('briefing_stories').insert(stories);
+    if (error) throw error;
+
+    return NextResponse.json({
+      ok: true,
+      comms_count: commsTop5.length,
+      jobs_count: displacementTop5.length + legislationTop2.length + organizingTop2.length,
+    });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+  }
+}
