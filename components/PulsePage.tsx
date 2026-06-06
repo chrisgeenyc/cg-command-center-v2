@@ -401,18 +401,38 @@ function BriefingCard({ story }: { story: BriefingStory }) {
 }
 
 export function TodayPulseModule({ navigate }: { navigate?: (id: string) => void }) {
-  const card = PULSE_CARDS.find(c => c.stance === "contrarian") || PULSE_CARDS[0];
+  const [stories, setStories] = useState<BriefingStory[]>([]);
+
+  useEffect(() => {
+    fetch('/api/briefings')
+      .then(r => r.json())
+      .then((d: BriefingsData) => {
+        const all = [
+          ...(Array.isArray(d['ai-comms']) ? d['ai-comms'] : []),
+          ...(Array.isArray(d['ai-jobs']) ? d['ai-jobs'] : []),
+        ];
+        setStories(all);
+      })
+      .catch(() => {});
+  }, []);
+
+  const featured = stories[0] ?? null;
+  const total = stories.length;
+
   return (
     <section className="section pulse-today">
       <div className="section-head">
         <span className="section-dot" style={{ background: "var(--violet-1)" }} />
         <h3 className="section-title">Today&apos;s Pulse</h3>
-        <span className="section-count">1 of 5 stories</span>
+        {total > 0 && <span className="section-count">1 of {total} stories</span>}
         <a className="section-action" href="#" onClick={e => { e.preventDefault(); navigate?.("pulse"); }}>
           See all in Pulse <Icon name="arrow-right" size={12} />
         </a>
       </div>
-      <PulseCardFull card={card} defaultExpanded={false} />
+      {featured
+        ? <BriefingCard story={featured} />
+        : <div style={{ padding: 20, color: 'var(--ink-3)', fontSize: 13.5 }}>Loading today&apos;s story…</div>
+      }
     </section>
   );
 }
