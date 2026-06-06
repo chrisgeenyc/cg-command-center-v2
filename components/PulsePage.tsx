@@ -462,8 +462,11 @@ function BriefingCard({ story }: { story: BriefingStory }) {
       )}
 
       {drafting && (
-        <div style={{ marginTop: 12, padding: '10px 0', fontSize: 13, color: 'var(--ink-3)' }}>
-          Drafting your {stance} take…
+        <div className="drafting-indicator">
+          <div className="drafting-dots">
+            <i /><i /><i />
+          </div>
+          <span>Drafting your {stance} take…</span>
         </div>
       )}
 
