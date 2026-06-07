@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/sync",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/briefings",
+      "schedule": "0 13 * * *"
     }
   ]
 }
