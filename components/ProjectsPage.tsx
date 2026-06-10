@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '@/components/Icon';
 import { PageHeader, MetricStrip } from '@/components/modules';
-import { PROJECTS_METRICS, PROJECT_CARDS, ProjectCard as ProjectCardType } from '@/lib/data';
+import { PROJECTS_METRICS, PROJECT_CARDS, ProjectCard as ProjectCardType, MetricItem } from '@/lib/data';
 
 interface AsanaProject {
   gid: string;
@@ -37,7 +37,9 @@ interface UnifiedTask {
   quadrant: 'do' | 'schedule' | 'delegate' | 'later';
 }
 
-function mapAsanaToCards(snapshot: AsanaSnapshot): ProjectCardType[] {
+type ProjCard = ProjectCardType & { gid?: string };
+
+function mapAsanaToCards(snapshot: AsanaSnapshot): ProjCard[] {
   return snapshot.projects.map((p) => {
     const tasks: AsanaTask[] = snapshot.tasks?.[p.gid] ?? [];
     const openTasks = tasks.filter((t) => !t.completed).length;
@@ -55,6 +57,7 @@ function mapAsanaToCards(snapshot: AsanaSnapshot): ProjectCardType[] {
     const health = daysLeft === 0 ? 'risk' : daysLeft != null && daysLeft < 7 ? 'risk' : 'healthy';
 
     return {
+      gid: p.gid,
       name: p.name,
       client: p.notes?.split('\n')[0]?.slice(0, 40) ?? 'Asana',
       deadline,
@@ -112,7 +115,7 @@ function ProjectCard({ p, onOpen }: { p: ProjectCardType; onOpen: (p: ProjectCar
   );
 }
 
-function ProjectDetail({ p, onClose }: { p: ProjectCardType; onClose: () => void }) {
+function ProjectDetail({ p, liveTasks, onClose }: { p: ProjectCardType; liveTasks?: { name: string; when: string; done: boolean }[]; onClose: () => void }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -125,7 +128,7 @@ function ProjectDetail({ p, onClose }: { p: ProjectCardType; onClose: () => void
   if (!mounted) return null;
 
   const h = HEALTH_LABELS[p.health] || HEALTH_LABELS.stale;
-  const tasks = [
+  const tasks = liveTasks ?? [
     { name: "Record lesson 5 — Prompts as Policy", when: "due today",   done: false },
     { name: "Upload modules 1–4 to platform",       when: "due today",   done: false },
     { name: "Grading config in LMS",                 when: "due today",   done: false },
@@ -291,7 +294,7 @@ function EisenhowerMatrix({ tasks }: { tasks: UnifiedTask[] }) {
 export default function ProjectsPage() {
   const [filter, setFilter] = useState("active");
   const [view, setView] = useState<'cards' | 'matrix'>('cards');
-  const [open, setOpen] = useState<ProjectCardType | null>(null);
+  const [open, setOpen] = useState<ProjCard | null>(null);
   const [liveData, setLiveData] = useState<AsanaSnapshot | null>(null);
   const [unifiedTasks, setUnifiedTasks] = useState<UnifiedTask[]>([]);
 
@@ -330,14 +333,37 @@ export default function ProjectsPage() {
     false
   );
 
+  const doCount = unifiedTasks.filter(t => t.quadrant === 'do').length;
+  const dueThisWeek = cards.filter(p => p.daysLeft != null && p.daysLeft <= 7).length;
+  const totalOpenTasks = cards.reduce((s, p) => s + p.openTasks, 0);
+
+  const liveMetrics: MetricItem[] = liveData ? [
+    { label: "Active",        value: String(cards.length),    sub: `${counts.risk} at risk`,            subDot: counts.risk > 0 ? "risk" : "healthy",  trend: { dir: "flat", text: "live · Asana" } },
+    { label: "Due This Week", value: String(dueThisWeek),     sub: "deadlines in next 7 days",          subDot: dueThisWeek > 0 ? "risk" : "healthy",  trend: { dir: "flat", text: "live" } },
+    { label: "Open Tasks",    value: String(totalOpenTasks),  sub: `${doCount} urgent + important`,     subDot: doCount > 0 ? "risk" : "healthy",      trend: { dir: "flat", text: "live" } },
+    { label: "Do First",      value: String(doCount),         sub: "across Asana + HubSpot",            subDot: doCount > 0 ? "risk" : "healthy",      trend: { dir: "flat", text: "Eisenhower" } },
+  ] : PROJECTS_METRICS;
+
+  const todayLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Live tasks for the open project's detail drawer — open first, then by due date
+  const openLiveTasks = open?.gid && liveData?.tasks?.[open.gid]
+    ? [...liveData.tasks[open.gid]]
+        .sort((a, b) => Number(a.completed) - Number(b.completed) || (a.due_on ?? '9999').localeCompare(b.due_on ?? '9999'))
+        .slice(0, 8)
+        .map(t => ({ name: t.name, when: t.due_on ? dueLabel(t.due_on).text : '—', done: t.completed }))
+    : undefined;
+
   return (
     <main className="main main-full">
       <PageHeader
         title={<>Projects.</>}
-        sub="What's in flight, what's stuck. Coursera ships Friday — Tegna needs a nudge."
-        right={<><strong>Apr 24, 2026</strong><span className="muted">{syncedAt ? `SYNCED ${new Date(syncedAt).toLocaleTimeString()} · ASANA` : 'SYNCED 12 MIN AGO · ASANA'}</span></>}
+        sub={liveData
+          ? `What's in flight, what's stuck. ${cards.length} active · ${dueThisWeek} due this week · ${doCount} in Do first.`
+          : "What's in flight, what's stuck. Coursera ships Friday — Tegna needs a nudge."}
+        right={<><strong>{todayLabel}</strong><span className="muted">{syncedAt ? `SYNCED ${new Date(syncedAt).toLocaleTimeString()} · ASANA` : 'SYNCED · ASANA'}</span></>}
       />
-      <MetricStrip items={PROJECTS_METRICS} />
+      <MetricStrip items={liveMetrics} />
 
       <div className="chips">
         <button className={`chip ${view === 'cards' ? 'active' : ''}`} onClick={() => setView('cards')}>
@@ -372,7 +398,7 @@ export default function ProjectsPage() {
           {filtered.map((p, i) => <ProjectCard key={i} p={p} onOpen={setOpen} />)}
         </div>
       )}
-      {open && <ProjectDetail p={open} onClose={() => setOpen(null)} />}
+      {open && <ProjectDetail p={open} liveTasks={openLiveTasks} onClose={() => setOpen(null)} />}
     </main>
   );
 }
