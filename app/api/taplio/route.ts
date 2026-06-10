@@ -10,6 +10,47 @@ function taplioHeaders() {
   };
 }
 
+// GET /api/taplio — recent posts, with published-today highlighted.
+// Taplio's list endpoint shape can vary, so normalize defensively.
+export async function GET() {
+  if (!TAPLIO_API_KEY) {
+    return NextResponse.json({ posts: [], postedToday: [] });
+  }
+
+  try {
+    const res = await fetch(`${TAPLIO_API_BASE}/posts?limit=25`, { headers: taplioHeaders() });
+    if (!res.ok) {
+      return NextResponse.json({ posts: [], postedToday: [], error: `Taplio ${res.status}` });
+    }
+    const raw = await res.json();
+    const list: Record<string, unknown>[] = Array.isArray(raw) ? raw
+      : Array.isArray(raw.posts) ? raw.posts
+      : Array.isArray(raw.data) ? raw.data
+      : Array.isArray(raw.items) ? raw.items
+      : [];
+
+    const posts = list.map(p => ({
+      id: String(p.id ?? ''),
+      content: String(p.content ?? p.text ?? ''),
+      status: String(p.status ?? ''),
+      published_at: (p.published_at ?? p.posted_at ?? p.publishedAt ?? null) as string | null,
+      scheduled_for: (p.scheduled_for ?? p.scheduledFor ?? null) as string | null,
+    }));
+
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const postedToday = posts.filter(p => {
+      if (!p.published_at) return false;
+      const t = new Date(p.published_at).getTime();
+      return !Number.isNaN(t) && t >= todayStart.getTime();
+    });
+
+    return NextResponse.json({ posts, postedToday });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ posts: [], postedToday: [], error: msg });
+  }
+}
+
 export async function POST(request: Request) {
   if (!TAPLIO_API_KEY) {
     return NextResponse.json({ error: 'Taplio API key not configured' }, { status: 500 });

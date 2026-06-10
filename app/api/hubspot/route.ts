@@ -32,6 +32,7 @@ export async function GET() {
     deals: (data.data as { deals?: unknown[] }).deals ?? [],
     pipelines: (data.data as { pipelines?: unknown[] }).pipelines ?? [],
     tasks: (data.data as { tasks?: unknown[] }).tasks ?? [],
+    contacts: (data.data as { contacts?: unknown[] }).contacts ?? [],
     synced_at: data.synced_at,
   });
 }
@@ -45,11 +46,15 @@ export async function POST() {
     const tasksRes = await hsGet(
       '/crm/v3/objects/tasks?properties=hs_task_subject,hs_task_priority,hs_timestamp,hs_task_status,hs_task_type&limit=100'
     ).catch(() => ({ results: [] }));
+    const contactsRes = await hsGet(
+      '/crm/v3/objects/contacts?properties=firstname,lastname,email,company,jobtitle,notes_last_contacted,lastmodifieddate&limit=100'
+    ).catch(() => ({ results: [] }));
 
     const snapshot = {
       deals: dealsRes.results ?? [],
       pipelines: pipelinesRes.results ?? [],
       tasks: tasksRes.results ?? [],
+      contacts: contactsRes.results ?? [],
     };
 
     const { error } = await supabaseAdmin

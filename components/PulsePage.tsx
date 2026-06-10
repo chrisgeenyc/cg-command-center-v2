@@ -33,6 +33,14 @@ interface BriefingsData {
   'ai-jobs': BriefingStory[];
 }
 
+interface TaplioPost {
+  id: string;
+  content: string;
+  status: string;
+  published_at: string | null;
+  scheduled_for: string | null;
+}
+
 function mapBufferQueue(snapshot: BufferSnapshot): QueueSlot[] {
   const slots: QueueSlot[] = [];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -573,12 +581,22 @@ export default function PulsePage() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [liveBuffer, setLiveBuffer] = useState<BufferSnapshot | null>(null);
   const [liveStories, setLiveStories] = useState<BriefingsData>({ 'ai-comms': [], 'ai-jobs': [] });
+  const [taplioPosts, setTaplioPosts] = useState<TaplioPost[]>([]);
 
   useEffect(() => {
     fetch('/api/buffer')
       .then(r => r.json())
       .then((d: BufferSnapshot) => { if (d.queue?.length || d.sent?.length) setLiveBuffer(d); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/taplio')
+      .then(r => r.json())
+      .then((d: { postedToday?: TaplioPost[] }) => {
+        if (Array.isArray(d.postedToday)) setTaplioPosts(d.postedToday);
+      })
+      .catch(err => console.error('[Pulse] taplio fetch failed:', err));
   }, []);
 
   useEffect(() => {
@@ -604,7 +622,7 @@ export default function PulsePage() {
     { id: "ai-comms", label: "AI + Comms", count: liveStories['ai-comms'].length },
     { id: "ai-jobs", label: "AI + Jobs", count: liveStories['ai-jobs'].length },
     { id: "saved", label: "Saved cues", count: PULSE_SAVED_CUES.length },
-    { id: "posted", label: "Posted today", count: 0 },
+    { id: "posted", label: "Posted today", count: taplioPosts.length },
   ];
 
   return (
@@ -665,9 +683,31 @@ export default function PulsePage() {
           </div>
         </section>
       ) : filter === "posted" ? (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--r-md)", padding: 28, textAlign: "center", color: "var(--ink-3)", fontSize: 13.5 }}>
-          Nothing posted today yet. The week&apos;s ahead of plan — 3 of 5 slots filled.
-        </div>
+        taplioPosts.length > 0 ? (
+          <div className="pulse-stack">
+            {taplioPosts.map(p => (
+              <article key={p.id} className="pulse-card">
+                <div className="pulse-edge" />
+                <div className="pulse-head">
+                  <div className="pulse-meta">
+                    <span className="pulse-source">Taplio · LinkedIn</span>
+                    {p.published_at && <><span className="pulse-sep">·</span><span>{new Date(p.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></>}
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, background: 'var(--healthy-bg, #e8f5ec)', color: 'var(--dot-healthy)' }}>
+                    ✓ posted
+                  </span>
+                </div>
+                <p className="pulse-summary" style={{ whiteSpace: 'pre-line' }}>
+                  {p.content.length > 400 ? p.content.slice(0, 397) + '…' : p.content}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div style={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: "var(--r-md)", padding: 28, textAlign: "center", color: "var(--ink-3)", fontSize: 13.5 }}>
+            Nothing posted today yet — drafts you send to Taplio will show here once they go live.
+          </div>
+        )
       ) : (
         <div className="pulse-stack">
           {(() => {

@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/Icon';
 import { UtilityRow, Header, PriorityCard, Metrics, StatusList, Calendar, Wins } from '@/components/modules';
 import { RightRail, CollabRail, MobileQuickieRow, MobileTaskRow } from '@/components/RightRail';
@@ -100,6 +101,72 @@ function WaitingOnChris() {
   );
 }
 
+interface UnifiedTask {
+  id: string;
+  title: string;
+  source: 'asana' | 'hubspot';
+  project: string | null;
+  due: string | null;
+  quadrant: 'do' | 'schedule' | 'delegate' | 'later';
+}
+
+function doFirstDueLabel(due: string | null): { text: string; urgent: boolean } {
+  if (!due) return { text: 'no date', urgent: false };
+  const days = Math.ceil((new Date(due).getTime() - Date.now()) / 86400000);
+  if (Number.isNaN(days)) return { text: 'no date', urgent: false };
+  if (days < 0) return { text: `${Math.abs(days)}d overdue`, urgent: true };
+  if (days === 0) return { text: 'due today', urgent: true };
+  if (days === 1) return { text: 'tomorrow', urgent: true };
+  return { text: `${days}d left`, urgent: false };
+}
+
+function DoFirstModule({ navigate }: { navigate: (id: string) => void }) {
+  const [tasks, setTasks] = useState<UnifiedTask[]>([]);
+
+  useEffect(() => {
+    fetch('/api/tasks')
+      .then(r => r.json())
+      .then((d: { tasks?: UnifiedTask[] }) => {
+        if (Array.isArray(d.tasks)) setTasks(d.tasks.filter(t => t.quadrant === 'do'));
+      })
+      .catch(() => {});
+  }, []);
+
+  if (tasks.length === 0) return null;
+
+  return (
+    <section className="section">
+      <div className="section-head">
+        <span className="section-dot" style={{ background: "var(--dot-risk)" }} />
+        <h3 className="section-title">Do first</h3>
+        <span className="section-count">{tasks.length} urgent + important</span>
+        <a className="section-action" href="#" onClick={e => { e.preventDefault(); navigate("projects"); }}>
+          full matrix <Icon name="arrow-right" size={12} />
+        </a>
+      </div>
+      <div className="list-card">
+        {tasks.slice(0, 5).map(t => {
+          const d = doFirstDueLabel(t.due);
+          return (
+            <div className="row" key={t.id}>
+              <div className="row-leader"><Icon name={t.source === 'asana' ? 'grid' : 'user'} size={15} /></div>
+              <div className="row-main">
+                <div className="row-title">{t.title}</div>
+                <div className="row-sub">{t.project ?? (t.source === 'hubspot' ? 'HubSpot' : 'Asana')}</div>
+              </div>
+              <div className="row-meta">
+                <span className={`pill ${d.urgent ? 'risk' : 'stale'}`}>
+                  <span className="pill-dot" />{d.text}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 const COLLAB_TASKS: StatusItem[] = [
   { name: "Coursera platform upload (Wk 6–10)", sub: "from Chris · due today · drafts ready", status: "risk", pill: "due today", icon: "video" },
   { name: "Grading config — same Coursera",     sub: "from Chris · due today",                  status: "risk", pill: "due today", icon: "alert" },
@@ -180,6 +247,8 @@ export default function TodayPage({ tweaks, setTweak, isMobile, navigate }: Toda
         <Metrics />
 
         {isMobile && <MobileTaskRow />}
+
+        <DoFirstModule navigate={navigate} />
 
         <TodayPulseModule navigate={navigate} />
 

@@ -79,10 +79,20 @@ function RelationshipOverview() {
   );
 }
 
+interface Suggestion {
+  id: string;
+  who: string;
+  ctx: string;
+  daysSilent: number | null;
+  reason: string;
+}
+
 export default function QuickiesPage({ tints = true }: { tints?: boolean }) {
   const [items, setItems] = useState<(QuickieItem & { id?: string })[]>(QUICKIES_FULL);
   const [filter, setFilter] = useState("all");
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/quickies')
@@ -92,6 +102,39 @@ export default function QuickiesPage({ tints = true }: { tints?: boolean }) {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch('/api/quickies/suggested')
+      .then(r => r.json())
+      .then((d: { suggestions?: Suggestion[] }) => {
+        if (Array.isArray(d.suggestions)) setSuggestions(d.suggestions);
+      })
+      .catch(err => console.error('[Quickies] suggestions fetch failed:', err));
+  }, []);
+
+  const addSuggested = async (s: Suggestion) => {
+    setAddedIds(prev => new Set(prev).add(s.id));
+    try {
+      const res = await fetch('/api/quickies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          who: s.who,
+          ctx: s.ctx || 'HubSpot contact',
+          action: `Reconnect — ${s.reason}. Send a value touch, no ask.`,
+          channel: 'email',
+          trigger: 'this week',
+          tint: 'blue',
+          temp: 'cold',
+        }),
+      });
+      const created = await res.json();
+      if (created.id) setItems(prev => [{ ...created }, ...prev]);
+    } catch (err) {
+      console.error('[Quickies] add suggested failed:', err);
+      setAddedIds(prev => { const n = new Set(prev); n.delete(s.id); return n; });
+    }
+  };
 
   const toggle = (idx: number) => {
     const q = items[idx];
@@ -212,27 +255,45 @@ export default function QuickiesPage({ tints = true }: { tints?: boolean }) {
           <div className="suggested-card">
             <div className="panel-head">
               <span className="panel-title">Suggested</span>
-              <span className="v2-badge">v2 preview</span>
+              <span className="v2-badge">live · HubSpot</span>
             </div>
             <div className="field-help" style={{ marginTop: 8, fontSize: 12.5 }}>
-              {QUICKIES_SUGGESTED.length} contacts you haven&apos;t touched in 90+ days. Add as Quickies?
+              {suggestions.length > 0
+                ? `${suggestions.length} contacts gone quiet 30+ days. Add as Quickies?`
+                : 'No quiet contacts found — sync HubSpot to refresh.'}
             </div>
             <div className="suggested-list">
-              {QUICKIES_SUGGESTED.map((s, i) => (
-                <div key={i} className="suggested-row">
+              {(suggestions.length > 0 ? suggestions : []).map((s) => (
+                <div key={s.id} className="suggested-row">
                   <div>
                     <div className="suggested-name">{s.who}</div>
                     <div className="suggested-ctx">{s.ctx}</div>
                   </div>
                   <span className="suggested-reason">{s.reason}</span>
-                  <button className="suggested-add">+ add</button>
+                  <button
+                    className="suggested-add"
+                    disabled={addedIds.has(s.id)}
+                    onClick={() => addSuggested(s)}
+                  >
+                    {addedIds.has(s.id) ? '✓ added' : '+ add'}
+                  </button>
+                </div>
+              ))}
+              {suggestions.length === 0 && QUICKIES_SUGGESTED.map((s, i) => (
+                <div key={i} className="suggested-row" style={{ opacity: .5 }}>
+                  <div>
+                    <div className="suggested-name">{s.who}</div>
+                    <div className="suggested-ctx">{s.ctx}</div>
+                  </div>
+                  <span className="suggested-reason">{s.reason}</span>
+                  <button className="suggested-add" disabled>+ add</button>
                 </div>
               ))}
             </div>
           </div>
           <div style={{ marginTop: 14, fontSize: 12, color: "var(--ink-3)", padding: "0 4px" }}>
             <strong style={{ color: "var(--ink-2)", fontWeight: 500 }}>Why suggested?</strong>{" "}
-            Auto-detected from connected sources (HubSpot, LinkedIn, calendar) when contacts go silent &gt;90 days. Engine ships v2.
+            Pulled from your HubSpot contacts — anyone with no recorded touch in 30+ days, quietest first.
           </div>
         </aside>
       </div>
