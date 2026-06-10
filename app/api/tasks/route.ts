@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+export const dynamic = 'force-dynamic';
+
 // Unified task shape across Asana + HubSpot, classified into
 // Eisenhower quadrants:
 //   do       — urgent + important

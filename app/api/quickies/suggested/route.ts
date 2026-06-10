@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+export const dynamic = 'force-dynamic';
+
 // Suggests follow-ups from HubSpot contacts that have gone quiet.
 // Reads the latest pipeline_snapshot (contacts synced by /api/hubspot POST)
 // and returns contacts with no recorded touch in 30+ days, quietest first.
