@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/Icon';
 import {
   TODAY_LABEL, HOOK, PRIORITY, METRICS, CALENDAR, WINS,
@@ -171,13 +172,35 @@ export function StatusList({
 }
 
 export function Calendar() {
+  const [liveEvents, setLiveEvents] = useState<CalendarItem[] | null>(null);
+
+  useEffect(() => {
+    fetch('/api/calendar')
+      .then(r => r.json())
+      .then((d: { events?: CalendarItem[]; error?: string }) => {
+        if (d.error) { console.error('[Calendar]', d.error); return; }
+        if (Array.isArray(d.events)) setLiveEvents(d.events);
+      })
+      .catch(err => console.error('[Calendar] fetch failed:', err));
+  }, []);
+
+  const items = liveEvents ?? CALENDAR;
+  const isLive = liveEvents !== null;
+
   return (
     <div className="panel">
       <div className="panel-title">
         <Icon name="calendar" size={14} /> Today&apos;s Calendar
-        <span className="section-count" style={{ marginLeft: "auto" }}>4 blocks</span>
+        <span className="section-count" style={{ marginLeft: "auto" }}>
+          {items.length === 0 ? 'clear day' : `${items.length} block${items.length === 1 ? '' : 's'}`}{isLive ? '' : ' · static'}
+        </span>
       </div>
-      {CALENDAR.map((c, i) => (
+      {items.length === 0 && (
+        <div style={{ padding: '14px 0', fontSize: 12.5, color: 'var(--ink-3)' }}>
+          Nothing on the calendar today. Deep work, anyone?
+        </div>
+      )}
+      {items.map((c, i) => (
         <div className="cal-item" key={i}>
           <div className="cal-time">{c.time}</div>
           <div>
