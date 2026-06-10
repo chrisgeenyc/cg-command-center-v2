@@ -27,6 +27,16 @@ interface AsanaSnapshot {
   synced_at?: string;
 }
 
+interface UnifiedTask {
+  id: string;
+  title: string;
+  source: 'asana' | 'hubspot';
+  project: string | null;
+  due: string | null;
+  priority: string | null;
+  quadrant: 'do' | 'schedule' | 'delegate' | 'later';
+}
+
 function mapAsanaToCards(snapshot: AsanaSnapshot): ProjectCardType[] {
   return snapshot.projects.map((p) => {
     const tasks: AsanaTask[] = snapshot.tasks?.[p.gid] ?? [];
@@ -225,16 +235,80 @@ function ProjectDetail({ p, onClose }: { p: ProjectCardType; onClose: () => void
   );
 }
 
+const QUADRANTS: { id: UnifiedTask['quadrant']; label: string; hint: string; tone: string }[] = [
+  { id: 'do',       label: 'Do first',  hint: 'urgent + important',       tone: 'do' },
+  { id: 'schedule', label: 'Schedule',  hint: 'important, not urgent',    tone: 'schedule' },
+  { id: 'delegate', label: 'Delegate',  hint: 'urgent, not important',    tone: 'delegate' },
+  { id: 'later',    label: 'Later',     hint: 'neither — park it',        tone: 'later' },
+];
+
+function dueLabel(due: string | null): { text: string; urgent: boolean } {
+  if (!due) return { text: 'no date', urgent: false };
+  const t = new Date(due).getTime();
+  if (Number.isNaN(t)) return { text: 'no date', urgent: false };
+  const days = Math.ceil((t - Date.now()) / 86400000);
+  if (days < 0) return { text: `${Math.abs(days)}d overdue`, urgent: true };
+  if (days === 0) return { text: 'due today', urgent: true };
+  if (days === 1) return { text: 'due tomorrow', urgent: true };
+  return { text: `${days}d left`, urgent: false };
+}
+
+function EisenhowerMatrix({ tasks }: { tasks: UnifiedTask[] }) {
+  return (
+    <div className="eisen-grid">
+      {QUADRANTS.map(q => {
+        const items = tasks.filter(t => t.quadrant === q.id);
+        return (
+          <section key={q.id} className={`eisen-quad ${q.tone}`}>
+            <header className="eisen-head">
+              <span className="eisen-label">{q.label}</span>
+              <span className="eisen-hint">{q.hint}</span>
+              <span className="eisen-count">{items.length}</span>
+            </header>
+            <div className="eisen-list">
+              {items.length === 0 && <div className="eisen-empty">Nothing here. Good.</div>}
+              {items.map(t => {
+                const d = dueLabel(t.due);
+                return (
+                  <div key={t.id} className="eisen-task">
+                    <span className={`eisen-source ${t.source}`}>{t.source === 'asana' ? 'A' : 'H'}</span>
+                    <span className="eisen-title">{t.title}</span>
+                    <span className="eisen-meta">
+                      {t.project && <span className="eisen-project">{t.project}</span>}
+                      <span className={`eisen-due ${d.urgent ? 'urgent' : ''}`}>{d.text}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ProjectsPage() {
   const [filter, setFilter] = useState("active");
+  const [view, setView] = useState<'cards' | 'matrix'>('cards');
   const [open, setOpen] = useState<ProjectCardType | null>(null);
   const [liveData, setLiveData] = useState<AsanaSnapshot | null>(null);
+  const [unifiedTasks, setUnifiedTasks] = useState<UnifiedTask[]>([]);
 
   useEffect(() => {
     fetch('/api/asana')
       .then(r => r.json())
       .then((d: AsanaSnapshot) => { if (d.projects?.length) setLiveData(d); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/tasks')
+      .then(r => r.json())
+      .then((d: { tasks?: UnifiedTask[] }) => {
+        if (Array.isArray(d.tasks)) setUnifiedTasks(d.tasks);
+      })
+      .catch(err => console.error('[Projects] tasks fetch failed:', err));
   }, []);
 
   const cards = liveData ? mapAsanaToCards(liveData) : PROJECT_CARDS;
@@ -266,7 +340,14 @@ export default function ProjectsPage() {
       <MetricStrip items={PROJECTS_METRICS} />
 
       <div className="chips">
-        {[
+        <button className={`chip ${view === 'cards' ? 'active' : ''}`} onClick={() => setView('cards')}>
+          <Icon name="grid" size={12} /> Projects
+        </button>
+        <button className={`chip ${view === 'matrix' ? 'active' : ''}`} onClick={() => setView('matrix')}>
+          <Icon name="zap" size={12} /> Priority matrix <span className="chip-count">{unifiedTasks.length}</span>
+        </button>
+        <span className="chip-divider" />
+        {view === 'cards' && [
           { id: "all",    label: "All",     count: counts.all },
           { id: "active", label: "Active",  count: counts.active },
           { id: "risk",   label: "At risk", count: counts.risk },
@@ -279,18 +360,18 @@ export default function ProjectsPage() {
             {c.label} <span className="chip-count">{c.count}</span>
           </button>
         ))}
-        <span className="chip-divider" />
-        <span className="chip-group-by">
-          <Icon name="grid" size={12} /> Group by deadline
-        </span>
         <button className="chip" style={{ marginLeft: "auto" }}>
           <Icon name="plus" size={12} /> New project
         </button>
       </div>
 
-      <div className="project-grid">
-        {filtered.map((p, i) => <ProjectCard key={i} p={p} onOpen={setOpen} />)}
-      </div>
+      {view === 'matrix' ? (
+        <EisenhowerMatrix tasks={unifiedTasks} />
+      ) : (
+        <div className="project-grid">
+          {filtered.map((p, i) => <ProjectCard key={i} p={p} onOpen={setOpen} />)}
+        </div>
+      )}
       {open && <ProjectDetail p={open} onClose={() => setOpen(null)} />}
     </main>
   );

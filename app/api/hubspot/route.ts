@@ -31,6 +31,7 @@ export async function GET() {
   return NextResponse.json({
     deals: (data.data as { deals?: unknown[] }).deals ?? [],
     pipelines: (data.data as { pipelines?: unknown[] }).pipelines ?? [],
+    tasks: (data.data as { tasks?: unknown[] }).tasks ?? [],
     synced_at: data.synced_at,
   });
 }
@@ -41,10 +42,14 @@ export async function POST() {
       '/crm/v3/objects/deals?properties=dealname,amount,dealstage,closedate,hubspot_owner_id,hs_deal_stage_probability&limit=100'
     );
     const pipelinesRes = await hsGet('/crm/v3/pipelines/deals');
+    const tasksRes = await hsGet(
+      '/crm/v3/objects/tasks?properties=hs_task_subject,hs_task_priority,hs_timestamp,hs_task_status,hs_task_type&limit=100'
+    ).catch(() => ({ results: [] }));
 
     const snapshot = {
       deals: dealsRes.results ?? [],
       pipelines: pipelinesRes.results ?? [],
+      tasks: tasksRes.results ?? [],
     };
 
     const { error } = await supabaseAdmin
@@ -53,7 +58,7 @@ export async function POST() {
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true, deal_count: snapshot.deals.length });
+    return NextResponse.json({ ok: true, deal_count: snapshot.deals.length, task_count: snapshot.tasks.length });
   } catch (err) {
     const msg = err instanceof Error ? err.message : JSON.stringify(err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
