@@ -24,6 +24,8 @@ const DEFAULTS: TweakValues = {
   persona: "operator",
 };
 
+const VALID_PAGES = ["today", "pipeline", "projects", "quickies", "pulse", "notes", "settings"];
+
 export default function Home() {
   const [t, setTweak] = useTweaks(DEFAULTS);
   const page = t.page;
@@ -31,7 +33,22 @@ export default function Home() {
 
   const navigate = (id: string) => {
     setTweak("page", id);
+    if (typeof window !== 'undefined' && window.location.hash !== `#${id}`) {
+      window.history.pushState(null, '', `#${id}`);
+    }
   };
+
+  // Keep the active page in the URL hash so refresh and
+  // back/forward land on the same sub-page.
+  useEffect(() => {
+    const fromHash = () => {
+      const h = window.location.hash.replace('#', '');
+      if (VALID_PAGES.includes(h)) setTweak("page", h);
+    };
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+    return () => window.removeEventListener('hashchange', fromHash);
+  }, [setTweak]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", t.theme);
