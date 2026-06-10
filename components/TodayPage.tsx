@@ -120,32 +120,23 @@ function doFirstDueLabel(due: string | null): { text: string; urgent: boolean } 
   return { text: `${days}d left`, urgent: false };
 }
 
-function DoFirstModule({ navigate }: { navigate: (id: string) => void }) {
-  const [tasks, setTasks] = useState<UnifiedTask[]>([]);
+function DoFirstModule({ navigate, tasks, excludeId }: { navigate: (id: string) => void; tasks: UnifiedTask[]; excludeId?: string }) {
+  const doTasks = tasks.filter(t => t.quadrant === 'do' && t.id !== excludeId);
 
-  useEffect(() => {
-    fetch('/api/tasks')
-      .then(r => r.json())
-      .then((d: { tasks?: UnifiedTask[] }) => {
-        if (Array.isArray(d.tasks)) setTasks(d.tasks.filter(t => t.quadrant === 'do'));
-      })
-      .catch(() => {});
-  }, []);
-
-  if (tasks.length === 0) return null;
+  if (doTasks.length === 0) return null;
 
   return (
     <section className="section">
       <div className="section-head">
         <span className="section-dot" style={{ background: "var(--dot-risk)" }} />
         <h3 className="section-title">Do first</h3>
-        <span className="section-count">{tasks.length} urgent + important</span>
+        <span className="section-count">{doTasks.length} urgent + important</span>
         <a className="section-action" href="#" onClick={e => { e.preventDefault(); navigate("projects"); }}>
           full matrix <Icon name="arrow-right" size={12} />
         </a>
       </div>
       <div className="list-card">
-        {tasks.slice(0, 5).map(t => {
+        {doTasks.slice(0, 5).map(t => {
           const d = doFirstDueLabel(t.due);
           return (
             <div className="row" key={t.id}>
@@ -182,8 +173,48 @@ interface TodayPageProps {
   navigate: (id: string) => void;
 }
 
+// Deadline proximity → progress bar fill. Overdue pins the bar.
+function deadlinePercent(due: string | null): number {
+  if (!due) return 40;
+  const days = Math.ceil((new Date(due).getTime() - Date.now()) / 86400000);
+  if (Number.isNaN(days)) return 40;
+  if (days < 0) return 100;
+  if (days === 0) return 85;
+  if (days === 1) return 70;
+  return Math.max(15, 70 - days * 8);
+}
+
 export default function TodayPage({ tweaks, setTweak, isMobile, navigate }: TodayPageProps) {
   const isCollab = tweaks.persona === "collab";
+  const [matrixTasks, setMatrixTasks] = useState<UnifiedTask[]>([]);
+
+  useEffect(() => {
+    fetch('/api/tasks')
+      .then(r => r.json())
+      .then((d: { tasks?: UnifiedTask[] }) => {
+        if (Array.isArray(d.tasks)) setMatrixTasks(d.tasks);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Today's single priority = top of the matrix: Do first beats
+  // Delegate beats Schedule; within a quadrant the API already
+  // sorts soonest-due first.
+  const topTask =
+    matrixTasks.find(t => t.quadrant === 'do') ??
+    matrixTasks.find(t => t.quadrant === 'delegate') ??
+    matrixTasks.find(t => t.quadrant === 'schedule') ??
+    null;
+
+  const doCount = matrixTasks.filter(t => t.quadrant === 'do').length;
+
+  const livePriority = topTask ? {
+    title: topTask.title,
+    dueText: doFirstDueLabel(topTask.due).text,
+    sourceText: topTask.project ?? (topTask.source === 'hubspot' ? 'HubSpot' : 'Asana'),
+    progressLabel: doCount > 0 ? `1 OF ${doCount} DO-FIRST` : 'NEXT UP',
+    percent: deadlinePercent(topTask.due),
+  } : null;
 
   if (isCollab) {
     return (
@@ -240,7 +271,7 @@ export default function TodayPage({ tweaks, setTweak, isMobile, navigate }: Toda
           />
         )}
         <Header />
-        <PriorityCard style={tweaks.priorityStyle} />
+        <PriorityCard style={tweaks.priorityStyle} live={livePriority} />
 
         {isMobile && <MobileQuickieRow tints={tweaks.postItTints} />}
 
@@ -248,7 +279,7 @@ export default function TodayPage({ tweaks, setTweak, isMobile, navigate }: Toda
 
         {isMobile && <MobileTaskRow />}
 
-        <DoFirstModule navigate={navigate} />
+        <DoFirstModule navigate={navigate} tasks={matrixTasks} excludeId={topTask?.id} />
 
         <TodayPulseModule navigate={navigate} />
 

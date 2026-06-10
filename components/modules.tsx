@@ -218,19 +218,41 @@ export function Wins() {
   );
 }
 
-export function PriorityCard({ style }: { style: string }) {
+export interface LivePriority {
+  title: string;
+  dueText: string;
+  sourceText: string;
+  progressLabel: string;
+  percent: number;
+}
+
+export function PriorityCard({ style, live }: { style: string; live?: LivePriority | null }) {
+  const progressLabel = live?.progressLabel ?? PRIORITY.progressLabel;
+  const percent = live?.percent ?? PRIORITY.percent;
+  const title = live?.title ?? PRIORITY.title;
+
   return (
     <section className={`priority ${style}`}>
       <div className="priority-progress">
-        <span className="progress-pill">{PRIORITY.progressLabel}</span>
-        <div className="priority-bar"><span style={{ width: `${PRIORITY.percent}%` }} /></div>
+        <span className="progress-pill">{progressLabel}</span>
+        <div className="priority-bar"><span style={{ width: `${percent}%` }} /></div>
       </div>
       <span className="priority-kicker"><span className="pulse" />{PRIORITY.kicker}</span>
-      <h2 className="priority-title">{PRIORITY.title}</h2>
+      <h2 className="priority-title">{title}</h2>
       <div className="priority-meta">
-        <span><b>Due</b> · today, end of day</span>
-        <span><b>Owner</b> · Chris (solo)</span>
-        <span><b>Escalation</b> · @sharisse if slipping</span>
+        {live ? (
+          <>
+            <span><b>Due</b> · {live.dueText}</span>
+            <span><b>Source</b> · {live.sourceText}</span>
+            <span><b>Why</b> · top of the Eisenhower matrix</span>
+          </>
+        ) : (
+          <>
+            <span><b>Due</b> · today, end of day</span>
+            <span><b>Owner</b> · Chris (solo)</span>
+            <span><b>Escalation</b> · @sharisse if slipping</span>
+          </>
+        )}
       </div>
     </section>
   );
