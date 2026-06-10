@@ -1,7 +1,70 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/Icon';
 import { QUICKIES, TASKS, SHARISSE_QUICKIES_SUGGESTED, QuickieItem } from '@/lib/data';
+
+interface MatrixTask {
+  id: string;
+  title: string;
+  source: 'asana' | 'hubspot';
+  project: string | null;
+  due: string | null;
+  quadrant: 'do' | 'schedule' | 'delegate' | 'later';
+}
+
+interface FocusTask {
+  name: string;
+  project: string;
+  percent: number;
+  urgent: boolean;
+  pill: string;
+}
+
+function focusDuePill(due: string | null): { pill: string; urgent: boolean; percent: number } {
+  if (!due) return { pill: 'no date', urgent: false, percent: 30 };
+  const days = Math.ceil((new Date(due).getTime() - Date.now()) / 86400000);
+  if (Number.isNaN(days)) return { pill: 'no date', urgent: false, percent: 30 };
+  if (days < 0) return { pill: `${Math.abs(days)}d overdue`, urgent: true, percent: 100 };
+  if (days === 0) return { pill: 'due today', urgent: true, percent: 85 };
+  if (days === 1) return { pill: 'tomorrow', urgent: true, percent: 70 };
+  return { pill: `${days}d left`, urgent: false, percent: Math.max(15, 70 - days * 8) };
+}
+
+// Today's Focus = the top of the Eisenhower matrix, quadrant order
+// do → delegate → schedule → later, soonest due first within each.
+// Falls back to the static list until live tasks arrive.
+function useFocusTasks(): { tasks: FocusTask[]; total: number; live: boolean } {
+  const [data, setData] = useState<{ tasks: FocusTask[]; total: number } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/tasks')
+      .then(r => r.json())
+      .then((d: { tasks?: MatrixTask[] }) => {
+        if (!Array.isArray(d.tasks) || d.tasks.length === 0) return;
+        const order = { do: 0, delegate: 1, schedule: 2, later: 3 };
+        const sorted = [...d.tasks].sort((a, b) => order[a.quadrant] - order[b.quadrant]);
+        const tasks = sorted.slice(0, 6).map(t => {
+          const { pill, urgent, percent } = focusDuePill(t.due);
+          return {
+            name: t.title,
+            project: t.project ?? (t.source === 'hubspot' ? 'HubSpot' : 'Asana'),
+            percent,
+            urgent,
+            pill,
+          };
+        });
+        setData({ tasks, total: d.tasks.length });
+      })
+      .catch(err => console.error('[RightRail] tasks fetch failed:', err));
+  }, []);
+
+  if (data) return { ...data, live: true };
+  return {
+    tasks: TASKS.map(t => ({ ...t, pill: t.urgent ? 'due today' : 'this week' })),
+    total: 12,
+    live: false,
+  };
+}
 
 const channelIcon = (ch: string) => ({
   email: "mail", linkedin: "linkedin", text: "text", call: "phone",
@@ -99,23 +162,24 @@ function QuickiesHalf({ tints }: { tints: boolean }) {
 }
 
 function TasksHalf() {
+  const { tasks, total, live } = useFocusTasks();
   return (
     <div className="rail-half bottom">
       <div className="rail-head">
         <div className="rail-title">
-          Today&apos;s Focus <span className="count">· {TASKS.length} of 12</span>
+          Today&apos;s Focus <span className="count">· {tasks.length} of {total}{live ? '' : ' · static'}</span>
         </div>
         <a className="section-action" href="#" style={{ marginLeft: "auto", fontSize: 11 }}>view all →</a>
       </div>
       <div className="rail-list" style={{ overflowY: "auto" }}>
-        {TASKS.map((t, i) => (
+        {tasks.map((t, i) => (
           <div className="task" key={i}>
             <div>
               <div className="task-name">{t.name}</div>
               <div className="task-tag"><span className="tag-dot" />{t.project}</div>
             </div>
             <span className={`pill ${t.urgent ? "risk" : "stale"}`}>
-              <span className="pill-dot" />{t.urgent ? "due today" : "this week"}
+              <span className="pill-dot" />{t.pill}
             </span>
             <div className={`task-progress ${t.urgent ? "urgent" : ""}`}>
               <span style={{ width: `${t.percent}%` }} />
@@ -192,13 +256,14 @@ export function MobileQuickieRow({ tints }: { tints: boolean }) {
 }
 
 export function MobileTaskRow() {
+  const { tasks, total } = useFocusTasks();
   return (
     <div className="mobile-rail">
       <div className="rail-head" style={{ padding: "0 4px" }}>
-        <div className="rail-title">Today&apos;s Focus <span className="count">· 4 of 12</span></div>
+        <div className="rail-title">Today&apos;s Focus <span className="count">· {tasks.length} of {total}</span></div>
       </div>
       <div className="rail-list" style={{ flexDirection: "row", overflowX: "auto", padding: "4px 16px 8px", margin: "0 -16px" }}>
-        {TASKS.map((t, i) => (
+        {tasks.map((t, i) => (
           <div key={i} style={{ flex: "0 0 75%", scrollSnapAlign: "start" }}>
             <div className="quickie" style={{ gridTemplateColumns: "1fr" }}>
               <div>
