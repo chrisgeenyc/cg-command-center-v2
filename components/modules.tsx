@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Icon from '@/components/Icon';
 import {
-  TODAY_LABEL, HOOK, PRIORITY, METRICS, CALENDAR, WINS,
+  HOOK, PRIORITY, METRICS, CALENDAR, WINS,
   MetricItem, StatusItem, CalendarItem, WinItem
 } from '@/lib/data';
 
@@ -25,15 +25,23 @@ export function UtilityRow({ onTheme, theme }: { onTheme: () => void; theme: str
 }
 
 export function Header() {
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString('en-US', {
+    weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+    timeZone: 'America/New_York',
+  });
+  const hour = Number(now.toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/New_York' }));
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
   return (
     <header className="header">
       <div>
-        <h1 className="greeting">Good morning, <em>Chris.</em></h1>
+        <h1 className="greeting">{greeting}, <em>Chris.</em></h1>
         <p className="greeting-sub">{HOOK}</p>
       </div>
       <div className="date-stamp">
-        <strong>{TODAY_LABEL}, 2026</strong>
-        <span className="muted">06:42 AM ET · MORNING REFRESH</span>
+        <strong>{dateLabel}</strong>
+        <span className="muted">DAILY SYNC · 8 AM ET</span>
       </div>
     </header>
   );

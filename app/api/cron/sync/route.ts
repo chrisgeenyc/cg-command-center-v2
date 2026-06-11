@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization');
   const expected = `Bearer ${process.env.CRON_SECRET}`;
@@ -8,7 +11,9 @@ export async function GET(req: NextRequest) {
   }
 
   const base = new URL(req.url).origin;
-  const routes = ['/api/asana', '/api/hubspot', '/api/buffer', '/api/briefings'];
+  // Briefings run on their own cron (/api/cron/briefings) — Tavily
+  // searches are too slow to share this function's time budget.
+  const routes = ['/api/asana', '/api/hubspot', '/api/buffer'];
 
   const results = await Promise.allSettled(
     routes.map(route =>
