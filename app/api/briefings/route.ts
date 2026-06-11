@@ -85,6 +85,82 @@ function mapToStory(result: TavilyResult, briefType: string, section: string): B
   };
 }
 
+// Ask Claude to cluster same-story coverage among recent stories,
+// then delete all but the newest article in each cluster. Fails
+// open — any error means nothing gets deleted.
+async function removeTopicalDuplicates(cutoff: string): Promise<number> {
+  try {
+    if (!process.env.ANTHROPIC_API_KEY) return 0;
+
+    const { data: rows } = await supabaseAdmin
+      .from('briefing_stories')
+      .select('id, brief_type, headline, summary, synced_at')
+      .gte('synced_at', cutoff)
+      .order('synced_at', { ascending: false });
+
+    if (!rows || rows.length < 2) return 0;
+
+    const listing = rows
+      .map(r => `${r.id} | ${r.brief_type} | ${r.headline} | ${(r.summary ?? '').slice(0, 120)}`)
+      .join('\n');
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: `Below is a list of news stories, one per line: id | brief_type | headline | summary excerpt.
+
+Identify groups of entries that cover the SAME underlying news event (e.g., two outlets reporting the same announcement). Only group entries with the same brief_type. Be conservative: stories on the same broad theme but about different events are NOT duplicates.
+
+Respond with ONLY this JSON, no other text:
+{"duplicate_groups": [["id-a","id-b"], ...]}
+
+If there are no duplicates, respond: {"duplicate_groups": []}
+
+Stories:
+${listing}`,
+        }],
+      }),
+    });
+
+    if (!res.ok) return 0;
+    const msg = await res.json();
+    const text: string = msg?.content?.[0]?.text ?? '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return 0;
+    const parsed = JSON.parse(jsonMatch[0]) as { duplicate_groups?: string[][] };
+
+    const validIds = new Set(rows.map(r => r.id));
+    const byId = new Map(rows.map(r => [r.id, r]));
+    const toDelete: string[] = [];
+
+    for (const group of parsed.duplicate_groups ?? []) {
+      const members = group.filter(id => validIds.has(id));
+      if (members.length < 2) continue;
+      // Keep the newest article, delete the rest
+      const sorted = [...members].sort((a, b) =>
+        (byId.get(b)!.synced_at as string).localeCompare(byId.get(a)!.synced_at as string)
+      );
+      toDelete.push(...sorted.slice(1));
+    }
+
+    if (toDelete.length > 0) {
+      await supabaseAdmin.from('briefing_stories').delete().in('id', toDelete);
+    }
+    return toDelete.length;
+  } catch {
+    return 0;
+  }
+}
+
 export async function GET() {
   try {
     const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -186,11 +262,17 @@ export async function POST() {
       if (error) throw error;
     }
 
+    // Different outlets cover the same news story — URL dedupe can't
+    // catch that. Have Claude cluster the stored stories by topic and
+    // delete all but the newest article in each cluster.
+    const topicalRemoved = await removeTopicalDuplicates(cutoff);
+
     return NextResponse.json({
       ok: true,
       comms_count: fresh.filter(s => s.brief_type === 'ai-comms').length,
       jobs_count: fresh.filter(s => s.brief_type === 'ai-jobs').length,
       skipped_duplicates: stories.length - fresh.length,
+      topical_duplicates_removed: topicalRemoved,
     });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
