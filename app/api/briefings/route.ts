@@ -96,17 +96,25 @@ export async function GET() {
 
     if (error) throw error;
 
-    const grouped: { 'ai-comms': unknown[]; 'ai-jobs': unknown[] } = {
-      'ai-comms': [],
-      'ai-jobs': [],
-    };
+    // Rows arrive newest-first. Cap the display at 5 per brief:
+    // comms takes the 5 freshest; jobs takes a section mix
+    // (3 displacement / 1 legislation / 1 organizing) from the
+    // latest batch, backfilling if a section came up empty.
+    const rows = data ?? [];
+    const comms = rows.filter(r => r.brief_type === 'ai-comms').slice(0, 5);
 
-    for (const row of data ?? []) {
-      if (row.brief_type === 'ai-comms') grouped['ai-comms'].push(row);
-      else if (row.brief_type === 'ai-jobs') grouped['ai-jobs'].push(row);
+    const jobsRecent = rows.filter(r => r.brief_type === 'ai-jobs').slice(0, 9);
+    const jobs = [
+      ...jobsRecent.filter(r => r.section === 'displacement').slice(0, 3),
+      ...jobsRecent.filter(r => r.section === 'legislation').slice(0, 1),
+      ...jobsRecent.filter(r => r.section === 'organizing').slice(0, 1),
+    ];
+    for (const r of jobsRecent) {
+      if (jobs.length >= 5) break;
+      if (!jobs.includes(r)) jobs.push(r);
     }
 
-    return NextResponse.json(grouped);
+    return NextResponse.json({ 'ai-comms': comms, 'ai-jobs': jobs.slice(0, 5) });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
