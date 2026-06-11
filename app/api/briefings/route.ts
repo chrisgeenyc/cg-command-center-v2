@@ -96,11 +96,19 @@ export async function GET() {
 
     if (error) throw error;
 
-    // Rows arrive newest-first. Cap the display at 5 per brief:
-    // comms takes the 5 freshest; jobs takes a section mix
-    // (3 displacement / 1 legislation / 1 organizing) from the
-    // latest batch, backfilling if a section came up empty.
-    const rows = data ?? [];
+    // Rows arrive newest-first. Dedupe by URL (the same article can
+    // land in consecutive daily batches), keeping the newest copy.
+    // Then cap the display at 5 per brief: comms takes the 5
+    // freshest; jobs takes a section mix (3 displacement /
+    // 1 legislation / 1 organizing) from the latest batch,
+    // backfilling if a section came up empty.
+    const seen = new Set<string>();
+    const rows = (data ?? []).filter(r => {
+      const key = r.url || r.headline;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     const comms = rows.filter(r => r.brief_type === 'ai-comms').slice(0, 5);
 
     const jobsRecent = rows.filter(r => r.brief_type === 'ai-jobs').slice(0, 9);
@@ -164,13 +172,25 @@ export async function POST() {
       ...organizingTop2.map(r => mapToStory(r, 'ai-jobs', 'organizing')),
     ];
 
-    const { error } = await supabaseAdmin.from('briefing_stories').insert(stories);
-    if (error) throw error;
+    // Skip articles we already stored in the last 7 days
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: existing } = await supabaseAdmin
+      .from('briefing_stories')
+      .select('url')
+      .gte('synced_at', cutoff);
+    const existingUrls = new Set((existing ?? []).map(r => r.url));
+    const fresh = stories.filter(s => !existingUrls.has(s.url));
+
+    if (fresh.length > 0) {
+      const { error } = await supabaseAdmin.from('briefing_stories').insert(fresh);
+      if (error) throw error;
+    }
 
     return NextResponse.json({
       ok: true,
-      comms_count: commsTop5.length,
-      jobs_count: displacementTop5.length + legislationTop2.length + organizingTop2.length,
+      comms_count: fresh.filter(s => s.brief_type === 'ai-comms').length,
+      jobs_count: fresh.filter(s => s.brief_type === 'ai-jobs').length,
+      skipped_duplicates: stories.length - fresh.length,
     });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
