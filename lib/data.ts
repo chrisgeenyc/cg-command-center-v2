@@ -184,7 +184,7 @@ export interface QueueSlot {
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-export const TODAY_LABEL = "Thursday, Aug 20";
+export const TODAY_LABEL = "Friday, Aug 21";
 
 export const HOOK = "Stage day. LSG Retreat Day 1 at 1307 New York Avenue NW kicks off at 1:30. Ragan AI training session squeezes in via Zoom at 2:45 — back-to-back trainer mode in DC.";
 
